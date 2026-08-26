@@ -1,0 +1,366 @@
+﻿
+@{
+    Layout = "_LayoutAdminAr";
+
+}
+<main>
+
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="row">
+            <!---------------إضافة طالب جديد---------------->
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">إضافة طالب جديد</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="heading14">معلومات الطالب</h2>
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <!-- اسم الطالب/تسمية -->
+                    <div class="col-lg-2">
+                        <label for="studentName" class="form-label heading16 labelspacing">اسم الطالب:</label>
+                    </div>
+                    <!------------------- اسم الطالب/حقل إدخال-------------->
+                    <div class="col-lg-10">
+                        <input type="text" class="form-control " id="studentName" placeholder="">
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+                <!-- تسمية -->
+                <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">رقم الهوية:</label>
+                            </div>
+                            <!-- حقل إدخال رقم الهوية -->
+                            <div class="col-lg-8" style="padding-right:8px">
+                                <input type="text" class="form-control" id="idNumber" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- الجنسية/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Nationality" class="form-label heading16 labelspacing" id="Nationality_L">الجنسية:</label>
+                            </div>
+                            <!-- الجنسية/قائمة منسدلة -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+
+                                <div class="input-group">
+                                    <input class="form-control" type="search" value="" id="recivedGroup">
+                                    <span class="input-group-append">
+                                        <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <!-- الدولة/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Country" class="form-label heading16 labelspacing" id="Country_L">الدولة:</label>
+                            </div>
+                            <!-- الدولة/قائمة منسدلة -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <div class="input-group">
+                                    <input class="form-control" type="search" value="" id="recivedGroup">
+                                    <span class="input-group-append">
+                                        <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">المدينة / المحافظة:</label>
+                            </div>
+                            <!-- حقل إدخال المدينة -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <input type="text" class="form-control" id="goverText" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <!-- رقم الهاتف/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="phone" class="form-label heading16 labelspacing" id="phone_L">رقم الهاتف:</label>
+                            </div>
+                            <!-- حقل إدخال رقم الهاتف -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <input type="text" class="form-control" id="phone" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- البريد الإلكتروني/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Email" class="form-label heading16 labelspacing" id="Email_L">البريد الإلكتروني:</label>
+                            </div>
+                            <!-- حقل إدخال البريد الإلكتروني -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <input type="text" class="form-control" id="Email" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+                <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="School" class="form-label heading16 labelspacing" id="phone_L">اسم المدرسة الثانوية:</label>
+                            </div>
+                            <!-- مربع نص اسم المدرسة الثانوية: -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <input type="text" class="form-control" id="School" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المعدل التراكمي -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="GPA" class="form-label heading16 labelspacing" id="Email_L">المعدل التراكمي:</label>
+                            </div>
+                            <!-- مربع نص المعدل التراكمي -->
+                            <div class="col-lg-8" style="padding-right: 8px">
+                                <input type="text" class="form-control" id="GPA" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <!-- الدرجة الأكاديمية/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="dropdowndegree" class="form-label heading16 labelspacing" id="degree_L">الدرجة الأكاديمية:</label>
+                            </div>
+
+                            <!-- الدرجة الأكاديمية/قائمة منسدلة -->
+                            <div class="col-lg-8" style="padding-right:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdowndegree" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">دبلوم</option>
+                                        <option value="2">بكالوريوس</option>
+                                        <option value="3">ماجستير</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- الكلية/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="dropdownFaculty" class="form-label heading16 labelspacing" id="Nationality_L">الكلية:</label>
+                            </div>
+                            <!-- الكلية/قائمة منسدلة -->
+                            <div class="col-lg-8" style="padding-right:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdownFaculty" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">التمريض</option>
+                                        <option value="2">الهندسة</option>
+                                        <option value="3">القانون</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <!-- البرنامج/تسمية -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Program" class="form-label heading16 labelspacing" id="Country_L">البرنامج:</label>
+                            </div>
+                            <!-- البرنامج/قائمة منسدلة -->
+                            <div class="col-lg-8" style="padding-right:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdownProgram" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">هندسة الحاسوب والاتصالات</option>
+                                        <option value="2">هندسة الالكترونيات</option>
+                                        <option value="3">الهندسة المدنية</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="SemesterText" class="form-label heading16 labelspacing" id="idNumber_L">الفصل الدراسي الحالي:</label>
+                            </div>
+                            <!-- نص الفصل الدراسي -->
+                            <div class="col-lg-8" style="padding-right:8px">
+                                <input type="text" class="form-control" id="SemesterText" placeholder="" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="partspacing"></div>
+                <div class="row">
+                    <!-- AGENTtName/label-->
+                    <div class="col-lg-2">
+                        <label for="agentName" class="form-label heading16 labelspacing">اسم الوكيل:</label>
+                    </div>
+                    <!------------------- agentName/textBox-------------->
+                    <div class="col-lg-10">
+                        <div class="row g-0">
+
+                            <!-- agent/DropDownList -->
+                            <div class="" style="">
+
+                                <div class="input-group">
+                                    <input class="form-control" type="search" value="" id="recivedGroup">
+                                    <span class="input-group-append">
+                                        <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="partspacing"></div>
+
+                <!-- رفع الملفات -->
+                <div class="row">
+                    <!-- رفع صورة الملف الشخصي -->
+                    <div class="col-lg-6">
+                        <label for="profilePicture" class="form-label heading16 labelspacing">الصورة الشخصية:</label>
+                        <input type="file" class="form-control" id="profilePicture" accept="image/*">
+                    </div>
+
+                    <!-- رفع جواز السفر / الهوية / شهادة الميلاد -->
+                    <div class="col-lg-6">
+                        <label for="identityDoc" class="form-label heading16 labelspacing">جواز السفر / الهوية / شهادة الميلاد:</label>
+                        <input type="file" class="form-control" id="identityDoc" accept=".pdf, .jpg, .png">
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+
+                <div class="row">
+                    <!-- رفع شهادة الثانوية العامة -->
+                    <div class="col-lg-6">
+                        <label for="highSchoolCert" class="form-label heading16 labelspacing">شهادة الثانوية العامة:</label>
+                        <input type="file" class="form-control" id="highSchoolCert" accept=".pdf, .jpg, .png">
+                    </div>
+
+                    <!-- رفع كشف العلامات -->
+                    <div class="col-lg-6">
+                        <label for="gradesReport" class="form-label heading16 labelspacing">كشف العلامات:</label>
+                        <input type="file" class="form-control" id="gradesReport" accept=".pdf, .jpg, .png">
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+
+                <div class="row">
+                    <!-- رفع شهادة البكالوريوس -->
+                    <div class="col-lg-6">
+                        <label for="bachelorDegree" class="form-label heading16 labelspacing">شهادة البكالوريوس:</label>
+                        <input type="file" class="form-control" id="bachelorDegree" accept=".pdf, .jpg, .png">
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+
+            </div>
+            <div class="row">
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8">
+                    <!-- زر حفظ -->
+                    <div class="btnwrap" style=" ">
+                        <a href="/admission/undergraduate-programs/" class="mybtn heading15" style="background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important;">
+                            حفظ
+                            <span class="line" style="border: 0px;"></span>
+                            <span class="areaborder" style="border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important;"></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-2"></div>
+            </div>
+
+
+            <div class="rowspacing"></div>
+
+        </div>
+    </div>
+
+
+    <div class="container-fluid padding margin">
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="heading14">رمز الطالب:</h2>
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <!------------------- studentCode/textBox-------------->
+                    <div class="col-lg-8">
+                        <input type="text" class="form-control " id="studentCode" placeholder="" style="border: 3px solid #daa328;" disabled>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+            </div>
+        </div>
+        <div class="partspacing"></div>
+
+    </div>
+</main>

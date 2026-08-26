@@ -1,0 +1,558 @@
+﻿@using University_Agent_System.Models
+@using University_Agent_System.Models.ViewModel
+@model AgentViewModel
+@{
+    Layout = "_LayoutAdmin";
+}
+@if (ViewBag.SuccessMessage != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @ViewBag.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+<main>
+    
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="row">
+            <!---------------ADD NEW Agent---------------->
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">ADD NEW AGENT</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="heading14">Agent Information</h2>
+                    </div>
+                </div>
+             
+            </div>
+            <form action="AddAgent" method="post" enctype="multipart/form-data">
+
+ @Html.AntiForgeryToken()
+
+            <div class="partspacing"></div>
+            <div class="row">
+                <!-- AgentName/label-->
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="AgentNameEnglish" class="form-label heading16 labelspacing">Agent Name English:<span style="color:red">*</span></label>
+                        </div>
+                        <!------------------- AgentName/textBox-------------->
+                        <div class="col-lg-8" style="padding-left:8px">
+                                <input asp-for="agentNameEnglish" type="text" class="form-control " id="AgentName" placeholder=""  name="agentNameEnglish" >
+                                
+                                <span asp-validation-for="agentNameEnglish" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+              
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="AgentNameArabic" class="form-label heading16 labelspacing">Agent Name Arabic:<span style="color:red">*</span></label>
+                        </div>
+                     
+                        <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control " id="AgentNameAr" placeholder="" name="agentNameArabic" dir="rtl">
+                                <span asp-validation-for="agentNameArabic" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <script>
+                                      function validateAgentCode(input) {
+
+                           
+                      const errorSpan = document.getElementById("agentCodeError");
+
+                      if (/[^0-9]/.test(input.value)) {
+                        errorSpan.textContent = "Numbers only";
+                      } else {
+                        errorSpan.textContent = "";
+                      }
+                    }
+            </script>
+            <div class="rowspacing"></div>
+            <div class="row">
+                    <!--agentcode-->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="AgentCode" class="form-label heading16 labelspacing">Agent Code:<span style="color:red">*</span></label>
+                            </div>
+                            <!------------------- AgentCode/textBox-------------->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control " id="AgentCode" placeholder="" name="agentCode" oninput="validateAgentCode(this)">
+                                <span id="agentCodeError" style="color: red;"></span>
+                                <span asp-validation-for="agentCode" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+            </div>
+            <div class="partspacing"></div>
+            <!-- label -->
+            <div class="row">
+
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">ID Number:<span style="color:red">*</span></label>
+                        </div>
+                        <!-- IDNumberTextBox -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="idNumber" placeholder="" name="nationalId">
+                                <span asp-validation-for="nationalId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Nationality/label -->
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="Nationality" class="form-label heading16 labelspacing" id="Nationality_L">Nationality: <span style="color:red">*</span></label>
+                        </div>
+                        <!-- Nationality/DropDownList -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                            <div class="input-group">
+                                <!-- Search Input -->
+                                <input class="form-control" type="search" value="" id="recivedGroup" onkeyup="filterNationality()" placeholder="Search Nationality...">
+                                <input type="hidden" id="selectedNationalityId" name="nationalityId"> <!-- Hidden input to store nationalityId -->
+                                <span class="input-group-append">
+                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                            <ul id="nationalityOptions" class="list-group mt-2" style="display: none;">
+                                @foreach (var nationality in Model.Nationalities)
+                                {
+                                    <li class="list-group-item nationality-item" data-id="@nationality.nationalityId">
+                                        @nationality.nationalityEnglish
+                                    </li>
+                                }
+                            </ul>
+                                <span asp-validation-for="nationalityId" class="text-danger"></span>
+
+@*                             <div class="input-group">
+                                <input class="form-control" type="search" value="" id="recivedGroup">
+                                <span class="input-group-append">
+                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+ *@
+
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="rowspacing"></div>
+
+            <div class="row">
+                <!-- Country/label -->
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="Country" class="form-label heading16 labelspacing" id="Country_L">Country:<span style="color:red">*</span></label>
+                        </div>
+                        <!-- Country/DropDownList -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                            <div class="input-group">
+                                <!-- Search Input -->
+                                <input class="form-control" type="search" value="" id="countrySearch" onkeyup="filterCountry()" placeholder="Search Country...">
+                                <input type="hidden" id="selectedCountryId" name="countryId"> <!-- Hidden input to store countryId -->
+                                <span class="input-group-append">
+                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+
+                                    @foreach (var country in Model.Countries)
+                                {
+                                        <li class="list-group-item country-item" data-id="@country.countryId">
+                                            @country.countryEnglish
+                                    </li>
+                                }
+                            </ul>
+                                <span asp-validation-for="countryId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">City / Governorate :<span style="color:red">*</span></label>
+                        </div>
+                        <!-- GoverTextBox -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                            <input type="text" class="form-control" id="goverText" placeholder="">
+                                <span asp-validation-for="city" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="rowspacing"></div>
+            <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label class="form-label heading16 labelspacing">
+                                    Phone Number:<span style="color:red">*</span>
+                                </label>
+                            </div>
+
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <select asp-for="agentPhoneCountryIso2"
+                                                asp-items="Model.PhoneCountries"
+                                                class="form-select"
+                                                id="agentPhoneCountryIso2">
+                                            <option value="">Select country</option>
+                                        </select>
+                                        <span asp-validation-for="agentPhoneCountryIso2" class="text-danger"></span>
+                                    </div>
+
+                                    <div class="col-md-7">
+                                        <input asp-for="agentPhoneNational"
+                                               type="text"
+                                               class="form-control"
+                                               id="agentPhoneNational"
+                                               placeholder="Enter local phone number" />
+                                        <span asp-validation-for="agentPhoneNational" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <input asp-for="agentPhone" type="hidden" id="agentPhone" />
+                                <span asp-validation-for="agentPhone" class="text-danger"></span>
+
+                                <small class="text-muted d-block mt-1">
+                                    The final saved number will be international format.
+                                </small>
+
+                                <div id="phonePreview" class="mt-2 text-primary fw-bold"></div>
+                            </div>
+                        </div>
+                    </div>                <!-- Email/label -->
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="Email" class="form-label heading16 labelspacing" id="Email_L">Email:<span style="color:red">*</span></label>
+                        </div>
+                        <!-- EmailTextBox -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="Email" placeholder="" name="agentEmail">
+                                <span asp-validation-for="agentEmail" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="partspacing"></div>
+            <div class="row">
+
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                                <label for="commission " class="form-label heading16 labelspacing" id="commission">Commission:</label>
+                        </div>
+                        <!-- commission TextBox -->
+                        <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="commission" placeholder="" name="commission">
+                               
+                        </div>
+                    </div>
+                </div>
+                <!-- ContractDate/label -->
+                <div class="col-lg-6">
+                    <div class="row g-0">
+                        <div class="col-lg-4">
+                            <label for="ContractDate" class="form-label heading16 labelspacing">Contract Date</label>
+                        </div>
+                        <div class="col-lg-8">
+                            <div class="row">
+                                <!-- From/label & DateBox -->
+                                <div class="col-lg-6">
+                                    <div class="row">
+                                        <div class="col-lg-3">
+                                                <label for="from" class="form-label normal labelspacing2">From:<span style="color:red">*</span></label>
+                                        </div>
+                                        <div class="col-lg-9">
+                                                <input type="date" class="form-control" id="from" name="contractStartDate">
+                                                <span asp-validation-for="contractStartDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- To/label & DateBox -->
+                                <div class="col-lg-6">
+                                    <div class="row">
+                                        <div class="col-lg-2">
+                                                <label for="to" class="form-label normal labelspacing2">To:<span style="color:red">*</span></label>
+                                        </div>
+                                        <div class="col-lg-10">
+                                                <input type="date" class="form-control" id="to" name="contractEndDate">
+                                                <span asp-validation-for="contractEndDate" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+
+
+
+
+
+
+
+
+            </div>
+            <div class="row" >
+
+                    <div class="col-lg-6">
+                        <div class=" row g-0">
+                        <div class="col-lg-4">
+                                <label for="agentContract" class="form-label heading16 labelspacing">Agent Contract:<span style="color:red">*</span></label>
+                        </div>
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="file" class="form-control" id="agentContract" name="agentContract" accept=".pdf, .jpg, .png">
+                                <span asp-validation-for="agentContract" class="text-danger"></span>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6"></div>
+            </div>
+
+                <div class="rowspacing"></div>
+            <div class="row">
+                <!-- Iban/label-->
+                <div class="col-lg-2">
+                    <label for="Iban" class="form-label heading16 labelspacing">Iban:</label>
+                </div>
+                <!-- Iban/textBox -->
+                <div class="col-lg-10">
+                        <input type="text" class="form-control" id="Iban" placeholder="" name="agentIban">
+                </div>
+            </div>
+            <div class="partspacing"></div>
+            <div class="row">
+                <!-- Passowrd/label-->
+                <div class="col-lg-2">
+                    <label for="Passowrd" class="form-label heading16 labelspacing">Passowrd:</label>
+                </div>
+                <!------------------- AgentName/textBox-------------->
+                <div class="col-lg-10">
+                        <input type="text" class="form-control " id="Passowrd" placeholder="" name="passowrd" value="@Model.passowrd" readonly style="background-color: #f5f5f5;">
+                </div>
+            </div>
+            <div class="rowspacing"></div>
+
+            <div class="row">
+                <!--notes/label-->
+                <div class="col-lg-2">
+                    <label for="notes" class="form-label heading16 labelspacing">Notes / Additional Information:</label>
+                </div>
+                <!------------------- notes/textBox-------------->
+                <div class="col-lg-10">
+                        <textarea class="form-control " id="notes" placeholder="" name="notes"></textarea>
+
+                </div>
+            </div>
+            <div class="partspacing"></div>
+
+            <div class="row">
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8">
+                    <!--save button-->
+                        <div class="btnwrap" style=" ">
+                            <button type="submit" class="mybtn heading15" style=" background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important;border:none ">
+                                Save
+                                <span class="line" style="border: 0px;  "></span>
+                                <span class="areaborder" style=" border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important; "></span>
+                            </button>
+                        </div>
+
+@*                     <div class="btnwrap" style=" ">
+                        <a href="/admission/undergraduate-programs/" class="mybtn heading15" style=" background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important; ">
+                            Save
+                            <span class="line" style="border: 0px;  "></span>
+                            <span class="areaborder" style=" border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important; "></span>
+                        </a>
+
+                    </div>
+ *@                </div>
+              </form>
+                <div class="col-lg-2"></div>
+
+
+            </div>
+
+            <div class="partspacing"></div>
+           
+        </div>
+
+</main>
+
+<script>
+ 
+          function filterCountry() {
+           var input, filter, list, items, i, txtValue;
+           input = document.getElementById('countrySearch');
+           filter = input.value.toUpperCase();
+           list = document.getElementById('countryOptions');
+           items = list.getElementsByTagName('li');
+
+           // If input is not empty, display the options
+           if (input.value.length > 0) {
+               list.style.display = "block"; // Show options
+           } else {
+               list.style.display = "none"; // Hide options when input is empty
+           }
+
+           // Loop through all options and hide those that don't match the search
+           for (i = 0; i < items.length; i++) {
+               txtValue = items[i].textContent || items[i].innerText;
+               if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                   items[i].style.display = "";
+               } else {
+                   items[i].style.display = "none";
+               }
+           }
+       }
+
+
+    // Function to populate the input with the selected option
+       document.querySelectorAll('.country-item').forEach(function(item) {
+           item.addEventListener('click', function() {
+               var countryName = item.innerText;
+               var countryId = item.getAttribute('data-id');
+
+               // Populate the input field with the selected country
+               document.getElementById('countrySearch').value = countryName;
+
+               // Store the countryId in a hidden input for later use
+               document.getElementById('selectedCountryId').value = countryId;
+
+               // Hide the options list
+               document.getElementById('countryOptions').style.display = "none";
+           });
+       });
+
+ 
+
+           function filterNationality() {
+                               var input, filter, list, items, i, txtValue;
+                               input = document.getElementById('recivedGroup');
+                               filter = input.value.toUpperCase();
+                               list = document.getElementById('nationalityOptions');
+                               items = list.getElementsByTagName('li');
+
+                               // If input is not empty, display the options
+                               if (input.value.length > 0) {
+                                   list.style.display = "block"; // Show options
+                               } else {
+                                   list.style.display = "none"; // Hide options when input is empty
+                               }
+
+                               // Loop through all options and hide those that don't match the search
+                               for (i = 0; i < items.length; i++) {
+                                   txtValue = items[i].textContent || items[i].innerText;
+                                   if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                       items[i].style.display = "";
+                                   } else {
+                                       items[i].style.display = "none";
+                                   }
+                               }
+                           }
+
+
+                       // Function to populate the input with the selected option
+                        document.querySelectorAll('.nationality-item').forEach(function(item) {
+                            item.addEventListener('click', function() {
+                                var nationalityName = item.innerText;
+                                var nationalityId = item.getAttribute('data-id');
+
+                                // Populate the input field with the selected nationality
+                                document.getElementById('recivedGroup').value = nationalityName;
+
+                                // Store the nationalityId in a hidden input for later use
+                                document.getElementById('selectedNationalityId').value = nationalityId;
+
+
+                                // Hide the options list
+                                document.getElementById('nationalityOptions').style.display = "none";
+                            });
+                        });
+    document.getElementById("dropdowndegree").addEventListener("change", function () {
+        const selectedDegreeId = parseInt(this.value);
+        document.getElementById("selectedDegreeId").value = selectedDegreeId; // update hidden input
+    });
+
+
+</script>
+
+<script>
+    function updatePhonePreview() {
+        const countrySelect = document.getElementById("agentPhoneCountryIso2");
+        const nationalInput = document.getElementById("agentPhoneNational");
+        const hiddenPhone = document.getElementById("agentPhone");
+        const preview = document.getElementById("phonePreview");
+
+        if (!countrySelect || !nationalInput || !hiddenPhone || !preview) return;
+
+        let countryText = countrySelect.options[countrySelect.selectedIndex]?.text || "";
+        let national = nationalInput.value || "";
+
+        national = national.replace(/[^\d]/g, "");
+
+        const match = countryText.match(/\(\+(\d+)\)/);
+        const dialingCode = match ? "+" + match[1] : "";
+
+        const full = dialingCode && national ? dialingCode + national : "";
+
+        hiddenPhone.value = full;
+        preview.innerText = full ? "Preview: " + full : "";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const countrySelect = document.getElementById("agentPhoneCountryIso2");
+        const nationalInput = document.getElementById("agentPhoneNational");
+
+        if (countrySelect) countrySelect.addEventListener("change", updatePhonePreview);
+        if (nationalInput) nationalInput.addEventListener("input", updatePhonePreview);
+
+        updatePhonePreview();
+    });
+</script>

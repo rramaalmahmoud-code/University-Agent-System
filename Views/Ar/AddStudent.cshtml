@@ -1,0 +1,2039 @@
+﻿@using University_Agent_System.Models
+@using Newtonsoft.Json
+@* @using University_Agent_System.Models.DTO
+
+ *@@using University_Agent_System.Models.ViewModel
+
+@* @model AddStudentViewModel *@
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@model StudentViewModel
+
+@functions {
+    public string GetUserType()
+    {
+        var jwt = Context.Request.Cookies["jwt"];
+        if (string.IsNullOrEmpty(jwt)) return null;
+
+        var handler = new JwtSecurityTokenHandler();
+        var token = handler.ReadJwtToken(jwt);
+        var typeClaim = token.Claims.FirstOrDefault(c => c.Type == "userType");
+        return typeClaim?.Value;
+    }
+}
+
+@{
+    string userType = GetUserType();
+    Layout = userType == "Super Admin" ? "_LayoutAdminAr" : "_LayoutAr";
+    var faculties = Model.Faculties as List<University_Agent_System.Models.Oracle.FacultyWithProgramsViewModel>;
+    Console.WriteLine(Model.Agents);
+    var requiredAttribute = userType == "Admin" ? "required" : "";
+}
+
+@if (ViewBag.SuccessMessage != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @ViewBag.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+@if (ViewBag.IsExpired != null && ViewBag.IsExpired == true)
+{
+    <div class="alert alert-warning text-center mt-5">
+        <h4>Your contract has expired. You are not allowed to add new students.</h4>
+    </div>
+}
+@if (ViewBag.IsExpired == null)
+{
+    <main>
+        <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+            <div class="row">
+                <!---------------ADD NEW STUDENT---------------->
+                <div class="col-lg-12">
+                    <section id="title-wrapper" style=" justify-content: End;">
+
+                        <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">إضافة طالب جديد</span></p></h1>
+                        <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                    </section>
+
+                    <div class="partspacing"></div>
+                    <div class="row">
+                        <dikv class="col-lg-12">
+                            <h2 class="heading14">معلومات الطالب</h2>
+                        </dikv>
+                    </div>
+
+
+                </div>
+                <form action="AddStudent" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="partspacing"></div>
+
+                    <!-- Student Basic Info -->
+                    <div class="card mb-4">
+                        <div class="card-header heading16">معلومات الطالب الأساسية</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="discount" class="form-label heading16 labelspacing">الرقم الجامعي</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" id="studentNumber" name="studentNumber" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="discount" class="form-label heading16 labelspacing">كلمة السر</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" id="Password" name="Password" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="profilePicture" class="form-label heading16 labelspacing">الصورة الشخصية:</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="profilePicture" name="studentPicture" accept="image/*">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="rowspacing"></div>
+
+                            <!-- تسمية -->
+                            <div class="row">
+
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="dropdownDegree" class="form-label heading16 labelspacing" id="degree_L">
+                                                الدرجة الأكاديمية:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+
+                                        <!-- الدرجة الأكاديمية/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <div style="position: relative;  width: 100%;">
+                                                <input type="hidden" asp-for="degreeId" id="selectedDegreeId" name="degreeId" required> <!-- Hidden input to store degreeId -->
+
+                                                <select class="form-select heading15" id="dropdownDegree" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                                    <option value="0" selected></option>
+                                                    @foreach (var degree in Model.Degrees)
+                                                    {
+                                                        <option value="@degree.degreeId">@degree.degreeArabic</option>
+                                                    }
+                                                </select>
+                                                <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                            </div>
+                                            <span asp-validation-for="degreeId" class="text-danger"></span>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- الكلية/تسمية -->
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="dropdownFaculty" class="form-label heading16 labelspacing" id="Nationality_L">
+                                                الكلية:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الكلية/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <div style="position: relative;  width: 100%;">
+                                                <input type="hidden" id="selectedFacultyId" asp-for="Faculty_no" name="Faculty_no" required> <!-- Hidden input to store facultyId -->
+
+                                                <select class="form-select heading15" id="dropdownFaculty">
+                                                    <option value="0" selected></option>
+                                                    @if (faculties != null)
+                                                    {
+                                                        foreach (var faculty in faculties)
+                                                        {
+                                                            <option value="@faculty.Faculty_no">@faculty.Faculty_Name</option>
+                                                        }
+                                                    }
+
+
+                                                </select>
+                                                <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                            </div>
+                                            <span asp-validation-for="Faculty_no" class="text-danger"></span>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rowspacing"></div>
+                            <div class="row">
+                                <!-- رفع شهادة البكالوريوس -->
+
+                                <div class="col-lg-6" id="bachelorCertDiv">
+                                    <label for="bachelorDegree" class="form-label heading16 labelspacing">شهادة البكالوريوس:<span style="color:red">*</span></label>
+                                    <input type="file" class="form-control" id="bachelorDegree" name="studentBachelor_Certification" accept=".pdf, .jpg, .png" required>
+                                    @*                                     <span asp-validation-for="studentBachelor_Certification" class="text-danger"></span>
+ *@                                </div>
+
+
+                            </div>
+                            <div class="rowspacing"></div>
+
+
+                            <div class="row">
+                                <!-- البرنامج/تسمية -->
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Program" class="form-label heading16 labelspacing" id="Country_L">
+                                                البرنامج:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- البرنامج/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <div style="position: relative;  width: 100%;">
+                                                <input type="hidden" id="selectedAdmissionMajorId" asp-for="AdmissionMajorId" />
+                                                <input type="hidden" id="selectedProgramId" asp-for="major_no" />
+
+                                                <select class="form-select heading15" id="dropdownProgram" data-selected="@Model.AdmissionMajorId" required>
+                                                    <option value="" selected></option>
+                                                </select>
+                                                <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                            </div>
+                                            <span asp-validation-for="AdmissionMajorId" class="text-danger"></span>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="SemesterText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                الفصل الدراسي الحالي:
+
+                                            </label>
+                                        </div>
+                                        <!-- نص الفصل الدراسي -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control"
+                                                   value="@Model.semesterId"
+                                                   disabled>
+                                            <input type="hidden" name="semesterId" value="@Model.semesterId" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="rowspacing"></div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="discount" class="form-label heading16 labelspacing">الخصم:%</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="discountPercentage" type="text" class="form-control" id="discount" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*                                 <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="requiredDiscount" class="form-label heading16 labelspacing">الخصم المطلوب:%</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" id="requiredDiscount" name="requiredDiscount" />
+                                        </div>
+                                    </div>
+                                </div>
+ *@                            </div>
+
+
+                            <!-- Names -->
+                            <!-- Student Arabic Name (4 parts) -->
+                            <div class="row">
+                                <div class="col-lg-2">
+                                    <label class="form-label heading16 labelspacing">
+                                        الاسم بالعربي <span style="color:red">*</span>
+                                    </label>
+                                </div>
+
+                                <div class="col-lg-10" style="padding-right:8px">
+                                    <div class="row g-2">
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="ArabicFirstName"
+                                                   class="form-control"
+                                                   placeholder="الاسم الأول"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="ArabicFatherName"
+                                                   class="form-control"
+                                                   placeholder="اسم الأب"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="ArabicGrandFatherName"
+                                                   class="form-control"
+                                                   placeholder="اسم الجد"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="ArabicFamilyName"
+                                                   class="form-control"
+                                                   placeholder="اسم العائلة"
+                                                   required />
+                                        </div>
+                                        <input type="hidden" name="studentNameArabic" id="FullArabicName" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rowspacing"></div>
+                            <!-- Student English Name (4 parts) -->
+
+
+                            <div class="row">
+                                <div class="col-lg-2">
+                                    <label class="form-label heading16 labelspacing">
+                                        الاسم بالإنجليزي <span style="color:red">*</span>
+                                    </label>
+                                </div>
+
+                                <div class="col-lg-10" style="padding-right:8px">
+                                    <div class="row g-2">
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="EnglishFirstName"
+                                                   class="form-control"
+                                                   placeholder="First Name"
+                                                   dir="ltr"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="EnglishFatherName"
+                                                   class="form-control"
+                                                   placeholder="Father Name"
+                                                   dir="ltr"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="EnglishGrandFatherName"
+                                                   class="form-control"
+                                                   placeholder="Grandfather Name"
+                                                   dir="ltr"
+                                                   required />
+                                        </div>
+
+                                        <div class="col-lg-3">
+                                            <input asp-for="EnglishFamilyName"
+                                                   class="form-control"
+                                                   placeholder="Family Name"
+                                                   dir="ltr"
+                                                   required />
+                                        </div>
+                                        <input type="hidden" name="studentNameEnglish" id="FullEnglishName" />
+
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ID + Nationality -->
+                            <div class="row">
+                                @*   <div class="col-lg-6">
+                                    <label class="form-label heading16">رقم الهوية / الجواز *</label>
+                                    <input asp-for="nationalId" class="form-control" required>
+                                </div> *@
+
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Nationality" class="form-label heading16 labelspacing" id="Nationality_L">الجنسية: <span style="color:red">*</span></label>
+                                        </div>
+                                        <!-- Nationality/DropDownList -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <div class="input-group">
+                                                <!-- Search Input -->
+                                                <input class="form-control" type="search" value="" id="recivedGroup" onkeyup="filterNationality()" placeholder="الدولة ابحث عن...">
+                                                <input type="hidden" id="selectedNationalityId" asp-for="nationalityId" name="nationalityId" required> <!-- Hidden input to store nationalityId -->
+
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+                                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                            <ul id="nationalityOptions" class="list-group mt-2" style="display: none;">
+                                                @foreach (var nationality in Model.Nationalities)
+                                                {
+                                                    <li class="list-group-item nationality-item" data-id="@nationality.nationalityId">
+                                                        @nationality.nationalityArabic
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <span asp-validation-for="nationalityId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">
+                                                اسم الأم                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="motherName" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+
+                    <div class="partspacing"></div>
+                    <!-- Birth Basic Info -->
+                    <div class="card mb-4">
+                        <div class="card-header heading16">مكان الولادة</div>
+                        <div class="card-body">
+
+
+                            <!-- Birth Info -->
+                            @*                             <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Country" class="form-label heading16 labelspacing" id="Country_L">
+                                                البلد:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                            <div class="input-group">
+                                                <input class="form-control" type="search" value="" id="countrySearch0" onkeyup="filterCountry()" placeholder="ابحث عن الدولة...">
+                                                <input type="hidden" asp-for="countryId0" id="selectedCountryId0" name="countryId0" required> <!-- Hidden input to store countryId -->
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <span asp-validation-for="countryId0" class="text-danger"></span>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                المدينة / المحافظة :
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- نص المدينة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" asp-for="city" id="goverText" placeholder="" name="city" required>
+                                            <span asp-validation-for="city" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">تاريخ الميلاد   <span style="color:red">*</span></label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                    <input type="date" asp-for="dateOfBirth" class="form-control">
+                                        </div>
+                                </div>
+
+                             
+                            </div>
+                            </div>
+ *@          
+     <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Country" class="form-label heading16 labelspacing" id="Country_L">
+                                                البلد:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <div class="input-group">
+                                                <input class="form-control"
+                                                       type="search"
+                                                       id="countrySearch0"
+                                                       data-list="countryOptions0"
+                                                       data-target="selectedCountryId0"
+                                                       onkeyup="filterCountry()"
+                                                       placeholder="ابحث عن الدولة..." />
+
+
+                                                <input type="hidden"
+                                                       asp-for="countryId0"
+                                                       id="selectedCountryId0"
+                                                       name="countryId0"
+                                                       required> <!-- Hidden input to store countryId -->
+
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                            <ul id="countryOptions0" class="list-group mt-2" style="display: none;">
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <span asp-validation-for="countryId0" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- المدينة / المحافظة -->
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                المدينة / المحافظة :
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" asp-for="city" id="goverText" placeholder="" name="city" required>
+                                            <span asp-validation-for="city" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- تاريخ الميلاد -->
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">تاريخ الميلاد <span style="color:red">*</span></label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="date" asp-for="dateOfBirth" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="rowspacing"></div>
+
+                            <!-- Dates -->
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                رقم جواز السفر/الرقم الوطني:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- رقم الهوية -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="nationalId" class="form-control" value="@Model.nationalId" required />
+                                            <span asp-validation-for="nationalId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">تاريخ الصدور</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="date" asp-for="createdDate" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">تاريخ الانتهاء</label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="date" asp-for="expiredDate" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+
+                                        <div class="col-lg-4">
+                                            <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                نوع الوثيقة:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- رقم الهوية -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="docId" class="form-control" value="@Model.docId" required />
+                                            <span asp-validation-for="docId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="identityDoc" class="form-label heading16 labelspacing">
+                                                جواز السفر / الهوية / شهادة الميلاد:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- رقم الهوية -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="identityDoc" name="studentProof_of_Identity" accept=".pdf, .jpg, .png">
+                                            @*                                 <span asp-validation-for="studentProof_of_Identity" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="genderDropdown" class="form-label heading16 labelspacing" id="gender_L">الجنس:<span style="color:red">*</span></label>
+                                        </div>
+                                        <div class="col-lg-8" style="padding-left:8px">
+                                            <select id="genderDropdown" class="form-control" onchange="setGenderValue(this)">
+                                                <option value="">-- اختر الجنس --</option>
+                                                <option value="1">ذكر</option>
+                                                <option value="0">أنثى</option>
+                                            </select>
+
+                                            <!-- Hidden input that stores the selected value -->
+                                            <input type="hidden" name="studentGender" id="studentGender" value="@Model.studentGender" />
+                                            <span asp-validation-for="studentGender" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="partspacing"></div>
+                    <!-- Address Basic Info -->
+                    <div class="card mb-4">
+                        <div class="card-header heading16">عنوان الطالب</div>
+                        <div class="card-body">
+
+
+                            <!-- address Info -->
+                            <div class="row">
+                                @*                                 <div class="col-lg-3">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Country" class="form-label heading16 labelspacing" id="Country_L">
+                                                البلد:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                            <div class="input-group">
+                                                <input class="form-control" type="search" value="" id="countrySearch" onkeyup="filterCountry()" placeholder="ابحث عن الدولة...">
+                                                <input type="hidden" asp-for="countryId" id="selectedCountryId" name="countryId" required> <!-- Hidden input to store countryId -->
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <span asp-validation-for="countryId" class="text-danger"></span>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+ *@
+                                <div class="col-lg-3">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="countrySearch" class="form-label heading16 labelspacing" id="Country_L">
+                                                البلد:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                            <div class="input-group">
+                                                <!-- استخدم data-list للإشارة للقائمة المرتبطة -->
+                                                <input class="form-control"
+                                                       type="search"
+                                                       value=""
+                                                       id="countrySearch"
+                                                       data-list="countryOptions"
+                                                       data-target="selectedCountryId"
+                                                       onkeyup="filterCountry()"
+                                                       placeholder="ابحث عن الدولة..." />
+
+                                                <input type="hidden"
+                                                       asp-for="countryId"
+                                                       id="selectedCountryId"
+                                                       name="countryId"
+                                                       required /> <!-- Hidden input to store countryId -->
+
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options list -->
+                                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+
+                                            <span asp-validation-for="countryId" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                                المدينة / المحافظة :
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- نص المدينة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="text" class="form-control" asp-for="cityAdd" id="goverText" placeholder="" name="cityAdd" required>
+                                            <span asp-validation-for="cityAdd" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="phone" class="form-label heading16 labelspacing" id="phone_L">
+                                                رقم الهاتف:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- رقم الهاتف -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input name="studentPhone" asp-for="studentPhone" type="text" class="form-control" id="phone" placeholder="" required>
+                                            <span asp-validation-for="studentPhone" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-3">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Email" class="form-label heading16 labelspacing" id="Email_L">
+                                                البريد الإلكتروني:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- البريد الإلكتروني -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input name="studentEmail" asp-for="studentEmail" type="email" class="form-control" id="Email" placeholder="" required>
+                                            <span asp-validation-for="studentEmail" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+
+                        </div>
+                    </div>
+
+                    <div class="rowspacing"></div>
+                    <div class="card mb-4">
+                        <div class="card-header heading16">معلومات إضافية</div>
+                        <div class="card-body">
+
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isDisabled">
+                                <label class="form-check-label heading16">هل يعاني من إعاقة؟</label>
+                            </div>
+
+                            <input asp-for="disabilityType" class="form-control mt-2" placeholder="نوع الإعاقة">
+
+                            <div class="rowspacing"></div>
+
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="isPreviousAAU">
+                                <label class="form-check-label heading16">هل درس سابقاً في جامعة AAU؟</label>
+                            </div>
+
+                            <div class="row mt-2">
+                                <div class="col-lg-6">
+                                    <input asp-for="previousStudentId" class="form-control" placeholder="الرقم الجامعي السابق">
+                                </div>
+                                <div class="col-lg-6">
+                                    <input asp-for="previousMajor" class="form-control" placeholder="التخصص السابق">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="partspacing"></div>
+                    <!-- certif Info -->
+                    <div class="card mb-4">
+                        <div class="card-header heading16">شهادة الثانوية العامة</div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                @*                                 <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="Country" class="form-label heading16 labelspacing" id="Country_L">
+                                                بلد إصدار الشهادة:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                            <div class="input-group">
+                                                <input class="form-control" type="search" value="" id="countrySearch3" onkeyup="filterCountry()" placeholder="ابحث عن الدولة...">
+                                                <input type="hidden" asp-for="countryId3" id="selectedCountryId3" name="countryId3" required> <!-- Hidden input to store countryId -->
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <span asp-validation-for="countryId3" class="text-danger"></span>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+ *@
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="countrySearch3" class="form-label heading16 labelspacing" id="Country_L">
+                                                بلد إصدار الشهادة:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+
+                                            <div class="input-group">
+                                                <!-- input مرتبط بالقائمة الخاصة به -->
+                                                <input class="form-control"
+                                                       type="search"
+                                                       value=""
+                                                       id="countrySearch3"
+                                                       data-list="countryOptions3"
+                                                       data-target="selectedCountryId3"
+                                                       onkeyup="filterCountry()"
+                                                       placeholder="ابحث عن الدولة..." />
+
+                                                <input type="hidden"
+                                                       asp-for="countryId3"
+                                                       id="selectedCountryId3"
+                                                       name="countryId3"
+                                                       required /> <!-- Hidden input to store countryId -->
+
+                                                <span class="input-group-append">
+                                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                        <i class="fa fa-search"></i>
+                                                    </button>
+                                                </span>
+                                            </div>
+
+                                            <!-- Options list خاص بهذا input -->
+                                            <ul id="countryOptions3" class="list-group mt-2" style="display: none;">
+                                                @foreach (var country in Model.Countries)
+                                                {
+                                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                                        @country.countryArabic
+                                                    </li>
+                                                }
+                                            </ul>
+
+                                            <span asp-validation-for="countryId3" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">اسم المدرسة    <span style="color:red">*</span></label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="studentSchool" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label class="form-label heading16">
+                                                الفرع                                 <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input asp-for="schoolBranch" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="rowspacing"></div>
+
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <input asp-for="certificateType" class="form-control" placeholder="نوع الشهادة">
+                                </div>
+                                <div class="col-lg-4">
+                                    <input asp-for="certificateYear" class="form-control" placeholder="سنة الحصول">
+                                </div>
+                                <div class="col-lg-4">
+                                    <input asp-for="seatNumber" class="form-control" placeholder="رقم الجلوس (اختياري)">
+                                </div>
+                            </div>
+
+                            <div class="rowspacing"></div>
+                            <div class="row">
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="highSchoolCert" class="form-label heading16 labelspacing">
+                                                شهادة الثانوية العامة:
+                                                <span style="color:red">*</span>
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="highSchoolCert" name="studentHigh_School_Certificate" accept=".pdf, .jpg, .png">
+                                            @*                                             <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="highSchoolCert2" class="form-label heading16 labelspacing">
+                                                شهادة الثانوية العامة 2:
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="highSchoolCert2" name="studentHigh_School_Certificate2" accept=".pdf, .jpg, .png">
+                                            @*                                             <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="highSchoolCert3" class="form-label heading16 labelspacing">
+                                                شهادة الثانوية العامة 3:
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="highSchoolCert3" name="studentHigh_School_Certificate3" accept=".pdf, .jpg, .png">
+                                            @*                                             <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <div class="row">
+
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="highSchoolCert4" class="form-label heading16 labelspacing">
+                                                شهادة الثانوية العامة 4:
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="highSchoolCert4" name="studentHigh_School_Certificate4" accept=".pdf, .jpg, .png">
+                                            @*                                             <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="row g-0">
+                                        <div class="col-lg-4">
+                                            <label for="highSchoolCert5" class="form-label heading16 labelspacing">
+                                                شهادة الثانوية العامة 5:
+                                            </label>
+                                        </div>
+                                        <!-- الدولة/قائمة منسدلة -->
+                                        <div class="col-lg-8" style="padding-right:8px">
+                                            <input type="file" class="form-control" id="highSchoolCert5" name="studentHigh_School_Certificate5" accept=".pdf, .jpg, .png">
+                                            @*                                             <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+ *@
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="col-lg-4">
+                                    <input asp-for="studentGPA" class="form-control" placeholder="المعدل">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="partspacing"></div>
+                    @if (userType == "Super Admin")
+                    {
+                        <div class="row">
+                            <!-- AGENTtName/label-->
+                            <div class="col-lg-2">
+                                <label for="agentName" class="form-label heading16 labelspacing">اسم الوكيل:<span style="color:red">*</span></label>
+                            </div>
+                            <!------------------- agentName/textBox -------------->
+                            <div class="col-lg-10">
+                                <div class="row g-0">
+                                    <!-- agent/DropDownList -->
+                                    <div class="">
+                                        <div class="input-group">
+                                            <input class="form-control" type="search" value="" id="agentSearch" onkeyup="filterAgent()" placeholder="Search Agent...">
+
+
+                                            @if (userType == "Admin")
+                                            {
+                                                <input type="hidden" id="selectedAgentId" asp-for="agentId" name="agentId" required />
+                                            }
+                                            else
+                                            {
+                                                <input type="hidden" id="selectedAgentId" asp-for="agentId" name="agentId" />
+                                            }
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+                                        <span asp-validation-for="agentId" class="text-danger"></span>
+                                        <!-- Options will be dynamically filtered in this list (Initially hidden) -->
+                                        <ul id="agentOptions" class="list-group mt-2" style="display: none;">
+                                            @foreach (var agent in Model.Agents)
+                                            {
+                                                <li class="list-group-item agent-item" data-id="@agent.agentId">
+                                                    @agent.agentNameArabic
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="partspacing"></div>
+                    <div class="row">
+                        <!-- اختيار طالب محوّل -->
+                        <div class="col-lg-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="TransferCheckbox" name="isTransfer" onchange="toggleUploads()" value="1" />
+                                <label class="form-check-label heading16" for="Transfer">
+                                    طالب محوّل
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- اختيار طالب دبلوم -->
+                        <div class="col-lg-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="DiplomaCheckbox" name="isDiploma" onchange="toggleUploads()" value="1" />
+                                <label class="form-check-label heading16" for="Diploma">
+                                    دبلوم
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- diploma Info -->
+                    <!-- Diploma Info -->
+                    <div id="diplomaUploadDiv" style="display:none;">
+                        <div class="card mb-4">
+
+                            <div class="card-header heading16">
+                                شهادة الدبلوم
+                            </div>
+
+                            <div class="card-body">
+
+                                <!-- Row 1 -->
+                                <div class="row">
+
+                                    <!-- Country -->
+                                    @*                                     <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            بلد إصدار الشهادة
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <div class="input-group">
+                                            <input type="search"
+                                                   class="form-control"
+                                                   id="diplomaCountrySearch"
+                                                   placeholder="ابحث عن الدولة..."
+                                                   onkeyup="filterCountry()">
+
+                                            <input type="hidden"
+                                                   asp-for="countryId1"
+                                                   id="diplomaCountryId"
+                                                   name="countryId1"
+                                                   required>
+
+                                            <button class="btn btn-outline-secondary bg-white" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+
+                                        <ul id="diplomaCountryOptions"
+                                            class="list-group mt-2"
+                                            style="display:none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item"
+                                                    data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId1" class="text-danger"></span>
+                                    </div>
+ *@
+                                    <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            بلد إصدار الشهادة
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <div class="input-group">
+                                            <!-- Input مرتبط بالقائمة الخاصة به -->
+
+                                            <input type="search"
+                                                   class="form-control"
+                                                   id="diplomaCountrySearch"
+                                                   data-list="diplomaCountryOptions"
+                                                   data-target="diplomaCountryId"
+                                                   placeholder="ابحث عن الدولة..."
+                                                   onkeyup="filterCountry()">
+
+                                            <input type="hidden"
+                                                   asp-for="countryId1"
+                                                   id="diplomaCountryId"
+                                                   name="countryId1"
+                                                   required>
+
+                                            <button class="btn btn-outline-secondary bg-white" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </div>
+
+                                        <ul id="diplomaCountryOptions"
+                                            class="list-group mt-2"
+                                            style="display:none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item" data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId1" class="text-danger"></span>
+                                    </div>
+
+                                    <!-- Faculty -->
+                                    <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            اسم الكلية
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="studentFaculty" class="form-control">
+                                        <span asp-validation-for="studentFaculty" class="text-danger"></span>
+
+                                    </div>
+
+                                    <!-- Major -->
+                                    <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            التخصص
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="schoolMajor" class="form-control">
+                                        <span asp-validation-for="schoolMajor" class="text-danger"></span>
+
+                                    </div>
+
+                                    <!-- Diploma Report -->
+                                    <div class="col-lg-3">
+                                        <label for="diplomaReportInput" class="form-label heading16">
+                                            كشف العلامات (دبلوم)
+                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="file"
+                                               class="form-control"
+                                               id="diplomaReportInput"
+                                               name="studentGrades_Report1"
+                                               accept=".pdf,.jpg,.png">
+                                        <span asp-validation-for="studentGrades_Report1" class="text-danger"></span>
+                                    </div>
+
+                                </div>
+
+                                <div class="rowspacing"></div>
+
+                                <!-- Row 2 -->
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">سنة الحصول</label>
+                                        <input asp-for="certificateYearDip"
+                                               class="form-control"
+                                               placeholder="سنة الحصول">
+                                        <span asp-validation-for="certificateYearDip" class="text-danger"></span>
+
+                                    </div>
+
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">المعدل</label>
+                                        <input asp-for="studentDiplomaGPA"
+                                               class="form-control"
+                                               placeholder="المعدل">
+                                        <span asp-validation-for="studentDiplomaGPA" class="text-danger"></span>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- transfer Info -->
+                    <div id="transferUploadDiv" style="display:none;">
+                        <div class="card mb-4">
+                            <div class="card-header heading16">
+                                خاص بالمنقولين من جامعات أخرى
+                            </div>
+
+                            <div class="card-body">
+
+                                <!-- Country + University -->
+                                <div class="row">
+
+                                    <!-- Country -->
+                                    @*                                     <div class="col-lg-3">
+                                        <label class="form-label heading16">الدولة *</label>
+
+                                        <div class="input-group">
+                                            <input class="form-control" type="search"
+                                                   id="countrySearch2"
+                                                   onkeyup="filterCountry()"
+                                                   placeholder="ابحث عن الدولة...">
+
+                                            <input type="hidden"
+                                                   asp-for="countryId2"
+                                                   id="selectedCountryId2"
+                                                   required>
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+
+                                        <ul id="countryOptions" class="list-group mt-2" style="display:none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item"
+                                                    data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId2" class="text-danger"></span>
+                                    </div>
+ *@
+                                    <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            الدولة                                             <span class="text-danger">*</span>
+                                        </label>
+
+                                        <div class="input-group">
+
+                                            <input type="search"
+                                                   class="form-control"
+                                                   id="countrySearch2"
+                                                   data-list="countryOptions2"
+                                                   data-target="selectedCountryId2"
+                                                   placeholder="ابحث عن الدولة..."
+                                                   onkeyup="filterCountry()">
+                                            <input type="hidden"
+                                                   asp-for="countryId2"
+                                                   id="selectedCountryId2"
+                                                   required>
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+
+                                        <!-- id فريد للقائمة -->
+                                        <ul id="countryOptions2" class="list-group mt-2" style="display:none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item"
+                                                    data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId2" class="text-danger"></span>
+                                    </div>
+
+                                    <!-- University -->
+                                    <div class="col-lg-3">
+                                        <label class="form-label heading16">
+                                            اسم الجامعة                                            <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="studentUniversity" class="form-control" required>
+                                        <span asp-validation-for="studentUniversity" class="text-danger"></span>
+
+                                    </div>
+
+
+                                    <div class="col-lg-3">
+                                        <label for="transferReport" class="form-label heading16 labelspacing"> (طالب محول )كشف العلامات :<span style="color:red">*</span></label> <input type="file" class="form-control" id="transferReport" name="studentGrades_Report" accept=".pdf, .jpg, .png">
+                                        @*                                         <span asp-validation-for="studentGrades_Report" class="text-danger"></span> 
+ *@                                        </div>
+                                </div>
+
+                                <div class="rowspacing"></div>
+
+                                <!-- Admission Method -->
+                                <div class="row">
+
+                                    <div class="col-lg-6">
+                                        <label class="form-label heading16">
+                                            طريقة القبول
+                                        </label>
+
+                                        <!-- Hidden field (this is what will be saved in DB) -->
+                                        <input type="hidden" name="admissionType" value="AGENT" />
+
+                                        <!-- Agent -->
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="radio"
+                                                   checked
+                                                   disabled>
+                                            <label class="form-check-label heading16">
+                                                بواسطة وكيل معتمد / مكتب
+                                            </label>
+                                        </div>
+
+                                        <!-- Personal -->
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="radio"
+                                                   disabled>
+                                            <label class="form-check-label heading16">
+                                                شخصي
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Agent Name -->
+                                    <div class="col-lg-6">
+                                        <label class="form-label heading16">
+                                            اسم الوكيل المعتمد
+                                        </label>
+
+                                        <!-- display only -->
+                                        <input type="text"
+                                               class="form-control"
+                                               value="@Model.agentId"
+                                               disabled>
+
+                                        <!-- value sent to server -->
+                                        <input type="hidden"
+                                               name="agentId"
+                                               value="@Model.agentId">
+                                    </div>
+
+                                </div>
+
+                                <div class="rowspacing"></div>
+
+                                <!-- Referrers (Optional) -->
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <label class="form-label heading16">
+                                            أسماء المعرّفين (اختياري)
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Referrer 1 -->
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer1Name"
+                                               class="form-control"
+                                               placeholder="اسم المعرّف الأول">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer1Relation"
+                                               class="form-control"
+                                               placeholder="صلة القرابة">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer1Phone"
+                                               class="form-control"
+                                               placeholder="رقم الهاتف">
+                                    </div>
+                                </div>
+
+                                <div class="rowspacing"></div>
+
+                                <!-- Referrer 2 -->
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer2Name"
+                                               class="form-control"
+                                               placeholder="اسم المعرّف الثاني">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer2Relation"
+                                               class="form-control"
+                                               placeholder="صلة القرابة">
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <input asp-for="Referrer2Phone"
+                                               class="form-control"
+                                               placeholder="رقم الهاتف">
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <div class="partspacing"></div>
+
+
+
+                    <div class="partspacing"></div>
+                    <!-- Legal Declaration -->
+                    <div class="card mb-4">
+                        <div class="card-header heading16">
+                            التعهّد والإقرار القانوني
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="legalDeclaration"
+                                       asp-for="LegalDeclaration"
+                                       name="LegalDeclaration"
+                                       required>
+
+                                <label class="form-check-label heading16" for="legalDeclaration">
+                                    أقرّ وأتعهد بأن جميع المعلومات والبيانات المدخلة صحيحة وكاملة،
+                                    وأتحمّل كامل المسؤولية القانونية في حال ثبوت خلاف ذلك،
+                                    وأوافق على أن للجامعة الحق في إلغاء الطلب واتخاذ الإجراءات القانونية اللازمة.
+                                </label>
+                            </div>
+
+                            <!-- validation message -->
+                            <span class="text-danger">
+                                يجب الموافقة على التعهّد قبل إرسال الطلب
+                            </span>
+
+                        </div>
+                    </div>
+
+
+
+
+                    <div class="partspacing"></div>
+                    <div class="row">
+                        <div class="col-lg-2"></div>
+                        <div class="col-lg-8">
+                            <!-- زر حفظ -->
+                            <div class="btnwrap" style=" ">
+                                <button type="submit" class="mybtn heading15" style="background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important;border:none;">
+                                    حفظ
+                                    <span class="line" style="border: 0px;"></span>
+                                    <span class="areaborder" style="border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important;"></span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-2"></div>
+                    </div>
+                </form>
+                <div class="rowspacing"></div>
+            </div>
+
+
+
+        </div>
+
+
+        <div class="container-fluid padding margin">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h2 class="heading14">رمز الطالب:</h2>
+                    <div class="rowspacing"></div>
+                    <div class="row">
+                        <div class="col-lg-2"></div>
+                        <!------------------- studentCode/textBox-------------->
+                        <div class="col-lg-8">
+                            <input type="text" class="form-control" id="studentCode" value="@ViewBag.StudentCode" placeholder="" style="border: 3px solid #daa328;" disabled>
+                        </div>
+                        <div class="col-lg-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="partspacing"></div>
+
+        </div>
+    </main>
+}
+<script>
+    function buildFullName() {
+        document.getElementById("FullArabicName").value =
+            [ArabicFirstName.value, ArabicFatherName.value,
+             ArabicGrandFatherName.value, ArabicFamilyName.value].join(" ");
+
+        document.getElementById("FullEnglishName").value =
+            [EnglishFirstName.value, EnglishFatherName.value,
+             EnglishGrandFatherName.value, EnglishFamilyName.value].join(" ");
+    }
+    document.querySelectorAll("input").forEach(i => i.addEventListener("blur", buildFullName));
+</script>
+
+<script>
+
+
+           function filterAgent() {
+
+               var input = document.getElementById('agentSearch');
+               var filter = input.value.toUpperCase();
+               var list = document.getElementById('agentOptions');
+               var items = list.getElementsByTagName('li');
+
+
+               list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+               for (var i = 0; i < items.length; i++) {
+                   var txtValue = items[i].textContent || items[i].innerText;
+                   items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+               }
+           }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+
+               var agentOptions = document.getElementById('agentOptions');
+
+               agentOptions.addEventListener('click', function (event) {
+                   if (event.target && event.target.matches('.agent-item')) {
+                       var agentName = event.target.innerText;
+                       var agentId = event.target.getAttribute('data-id');
+
+
+                       document.getElementById('agentSearch').value = agentName;
+                       document.getElementById('selectedAgentId').value = agentId;
+
+
+                       agentOptions.style.display = "none";
+                   }
+               });
+
+
+               document.addEventListener('click', function (event) {
+                   var isClickInside = document.getElementById('agentSearch').contains(event.target) ||
+                                       agentOptions.contains(event.target);
+                   if (!isClickInside) {
+                       agentOptions.style.display = "none";
+                   }
+               });
+           });
+
+
+                                  function toggleUploads() {
+                                      debugger
+           const transferChecked = document.getElementById("TransferCheckbox").checked;
+           const diplomaChecked = document.getElementById("DiplomaCheckbox").checked;
+
+           const transferDiv = document.getElementById("transferUploadDiv");
+           const diplomaDiv = document.getElementById("diplomaUploadDiv");
+
+           const transferInput = document.getElementById("transferReport");
+           const diplomaInput = document.getElementById("diplomaReport");
+
+
+           if (transferChecked) {
+               transferDiv.style.display = "block";
+               transferInput.setAttribute("required", "required");
+           } else {
+               transferDiv.style.display = "none";
+               transferInput.removeAttribute("required");
+           }
+
+
+           if (diplomaChecked) {
+               diplomaDiv.style.display = "block";
+               diplomaInput.setAttribute("required", "required");
+           } else {
+               diplomaDiv.style.display = "none";
+               diplomaInput.removeAttribute("required");
+           }
+       }
+
+
+       window.onload = toggleUploads;
+
+
+     function filterCountry() {
+        var input = event.target;
+        var filter = input.value.toUpperCase();
+        var listId = input.getAttribute("data-list");
+        var list = document.getElementById(listId);
+        var items = list.getElementsByTagName('li');
+
+
+        list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+        for (var i = 0; i < items.length; i++) {
+            var txtValue = items[i].textContent || items[i].innerText;
+            items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+        document.querySelectorAll('input[data-list]').forEach(function(input) {
+            const listId = input.getAttribute('data-list');
+            const list = document.getElementById(listId);
+
+
+            input.addEventListener('keyup', function () {
+                const filter = input.value.toUpperCase();
+                const items = list.getElementsByTagName('li');
+
+                list.style.display = input.value.length > 0 ? 'block' : 'none';
+
+                for (let i = 0; i < items.length; i++) {
+                    const txtValue = items[i].textContent || items[i].innerText;
+                    items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+                }
+            });
+
+
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (input.value.length > 0) {
+                    list.style.display = 'block';
+                }
+            });
+
+
+            list.addEventListener('click', function(e) {
+                if (e.target && e.target.matches('li.country-item')) {
+                    e.stopPropagation();
+                    input.value = e.target.innerText;
+                    const hiddenInputId = input.getAttribute('data-target');
+                    if (hiddenInputId) {
+                        document.getElementById(hiddenInputId).value = e.target.getAttribute('data-id');
+                    }
+                    list.style.display = 'none';
+                }
+            });
+        });
+
+
+        document.addEventListener('click', function () {
+            document.querySelectorAll('ul.list-group').forEach(function(list) {
+                list.style.display = 'none';
+            });
+        });
+    });
+
+
+    (() => {
+        const degreeDropdown = document.getElementById("dropdownDegree");
+        const facultyDropdown = document.getElementById("dropdownFaculty");
+        const programDropdown = document.getElementById("dropdownProgram");
+        const selectedDegreeInput = document.getElementById("selectedDegreeId");
+        const selectedFacultyInput = document.getElementById("selectedFacultyId");
+        const selectedAdmissionMajorInput = document.getElementById("selectedAdmissionMajorId");
+        const selectedProgramInput = document.getElementById("selectedProgramId");
+        const discountInput = document.getElementById("discount");
+        const discountHiddenInput = document.getElementById("discountHidden");
+        const semesterInput = document.querySelector('input[name="semesterId"]');
+        const getMajorsUrl = '@Url.Action("GetMajors", "AdmissionCatalog")';
+
+        if (!degreeDropdown || !facultyDropdown || !programDropdown ||
+            !selectedDegreeInput || !selectedFacultyInput ||
+            !selectedAdmissionMajorInput || !selectedProgramInput ||
+            !discountInput || !semesterInput) {
+            return;
+        }
+
+        const getValue = (item, ...keys) => {
+            for (const key of keys) {
+                if (item[key] !== undefined && item[key] !== null) {
+                    return item[key];
+                }
+            }
+
+            return null;
+        };
+
+        const clearMajor = () => {
+            programDropdown.innerHTML = '<option value="">اختر البرنامج</option>';
+            selectedAdmissionMajorInput.value = "";
+            selectedProgramInput.value = "";
+            discountInput.value = "";
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = "";
+            }
+        };
+
+        const applySelectedMajor = () => {
+            const selectedOption = programDropdown.options[programDropdown.selectedIndex];
+            const hasSelection = selectedOption && programDropdown.value !== "";
+            const discount = hasSelection
+                ? (selectedOption.dataset.discountPercentage || "0")
+                : "";
+
+            selectedAdmissionMajorInput.value = hasSelection
+                ? programDropdown.value
+                : "";
+
+
+            selectedProgramInput.value = hasSelection
+                ? (selectedOption.dataset.oracleMajorNo || "")
+                : "";
+
+            discountInput.value = discount;
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = discount;
+            }
+        };
+
+        const loadMajors = async (selectedAdmissionMajorId = "") => {
+            clearMajor();
+
+            selectedDegreeInput.value = degreeDropdown.value === "0"
+                ? ""
+                : degreeDropdown.value;
+
+            selectedFacultyInput.value = facultyDropdown.value === "0"
+                ? ""
+                : facultyDropdown.value;
+
+            if (!selectedDegreeInput.value ||
+                !selectedFacultyInput.value ||
+                !semesterInput.value) {
+                return;
+            }
+
+            programDropdown.disabled = true;
+
+            try {
+                const query = new URLSearchParams({
+                    facultyNo: selectedFacultyInput.value,
+                    degreeId: selectedDegreeInput.value,
+                    semesterId: semesterInput.value
+                });
+
+                if (selectedAdmissionMajorId) {
+                    query.set("selectedAdmissionMajorId", selectedAdmissionMajorId);
+                }
+
+                const response = await fetch(`${getMajorsUrl}?${query}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error("تعذر تحميل البرامج");
+                }
+
+                const responseBody = await response.json();
+                const majors = Array.isArray(responseBody)
+                    ? responseBody
+                    : (responseBody.data || []);
+
+                majors.forEach(major => {
+                    const admissionMajorId = getValue(
+                        major,
+                        "admissionMajorId",
+                        "AdmissionMajorId"
+                    );
+
+                    if (admissionMajorId === null) {
+                        return;
+                    }
+
+                    const option = document.createElement("option");
+                    option.value = admissionMajorId;
+                    option.textContent = getValue(
+                        major,
+                        "majorNameArabic",
+                        "MajorNameArabic",
+                        "majorNameAr",
+                        "MajorNameAr",
+                        "displayName",
+                        "DisplayName",
+                        "majorName",
+                        "MajorName"
+                    ) || "";
+
+                    option.dataset.oracleMajorNo = getValue(
+                        major,
+                        "oracleMajorNo",
+                        "OracleMajorNo",
+                        "majorNo",
+                        "MajorNo"
+                    ) || "";
+
+                    option.dataset.discountPercentage = getValue(
+                        major,
+                        "discountPercentage",
+                        "DiscountPercentage",
+                        "discount",
+                        "Discount"
+                    ) ?? 0;
+
+                    option.selected = String(admissionMajorId) ===
+                        String(selectedAdmissionMajorId);
+
+                    programDropdown.appendChild(option);
+                });
+
+                applySelectedMajor();
+            }
+            catch (error) {
+                clearMajor();
+                console.error(error);
+            }
+            finally {
+                programDropdown.disabled = false;
+            }
+        };
+
+        programDropdown.addEventListener("change", applySelectedMajor);
+        degreeDropdown.addEventListener("change", () => loadMajors());
+        facultyDropdown.addEventListener("change", () => loadMajors());
+
+        const initiallySelectedMajor =
+            programDropdown.dataset.selected ||
+            selectedAdmissionMajorInput.value ||
+            "";
+
+        loadMajors(initiallySelectedMajor);
+    })();
+
+
+        function filterNationality() {
+                               var input, filter, list, items, i, txtValue;
+                               input = document.getElementById('recivedGroup');
+                               filter = input.value.toUpperCase();
+                               list = document.getElementById('nationalityOptions');
+                               items = list.getElementsByTagName('li');
+
+
+                               if (input.value.length > 0) {
+                                   list.style.display = "block";
+                               } else {
+                                   list.style.display = "none";
+                               }
+
+
+                               for (i = 0; i < items.length; i++) {
+                                   txtValue = items[i].textContent || items[i].innerText;
+                                   if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                       items[i].style.display = "";
+                                   } else {
+                                       items[i].style.display = "none";
+                                   }
+                               }
+                           }
+
+
+                           document.querySelectorAll('.nationality-item').forEach(function(item) {
+                               item.addEventListener('click', function() {
+                                   var nationalityName = item.innerText;
+                                   var nationalityId = item.getAttribute('data-id');
+
+
+                                   document.getElementById('recivedGroup').value = nationalityName;
+
+
+                                   document.getElementById('selectedNationalityId').value = nationalityId;
+
+
+                                   document.getElementById('nationalityOptions').style.display = "none";
+                               });
+                           });
+
+
+           document.getElementById("dropdownDegree").addEventListener("change", function () {
+           const selectedDegreeId = parseInt(this.value);
+           document.getElementById("selectedDegreeId").value = selectedDegreeId;
+       });
+
+
+        function setGenderValue(selectElement) {
+           document.getElementById("studentGender").value = selectElement.value;
+       }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+                  const dropdown = document.getElementById('dropdownDegree');
+              const certDiv = document.getElementById('bachelorCertDiv');
+
+              const masterKeyword = "ماجستير";
+
+              function updateCertificateVisibility() {
+                  const selectedText = dropdown.options[dropdown.selectedIndex].text.toLowerCase();
+                  if (selectedText.includes(masterKeyword)) {
+                      certDiv.style.display = "block";
+                  } else {
+                      certDiv.style.display = "none";
+                  }
+              }
+
+
+              updateCertificateVisibility();
+
+
+              dropdown.addEventListener('change', updateCertificateVisibility);
+          });
+</script>

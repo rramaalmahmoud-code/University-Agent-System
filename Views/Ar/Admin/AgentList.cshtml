@@ -1,0 +1,219 @@
+﻿@using Newtonsoft.Json
+@{
+    Layout = "_LayoutAdminAr";
+    int totalPages = (int)Math.Ceiling((double)Model.AgentTotalCount / Model.PageSize);
+
+
+}
+<main>
+    <div class="container-fluid padding margin">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">قائمة الوكلاء</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+            </div>
+           
+            <div class="partspacing"></div>
+            <form method="get" asp-action="AgentList" id="filterForm">
+            <div class="row g-0">
+
+                <div class="col-xxl-5 col-xl-5 col-lg-5">
+                    <input type="text" name="search" value="@Model.SearchTerm" class="form-control " id="studentName" placeholder="ابحث بالاسم أو الرقم" style=" border-color: #C81589; border-radius: 0rem !important; padding: 0.355rem .75rem;">
+
+                </div>
+
+                <div class="col-xxl-2 col-xl-3 col-lg-3">
+                    <!-- زر البحث -->
+                    <div class="btnwrap">
+                        <button type="submit" target="_blank" class="mybtn heading15" style="width: 100%; background: #c81589; border-radius: 0rem !important;border: none;">
+                            بحث <i class="fas fa-search"></i>
+                            <span class="line" style=" border-left: 6px solid #252468; border-bottom: 6px solid #252468; "></span>
+                            <span class="areaborder" style="border: 0px;"></span>
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="col-xxl-1 col-xl-1 col-lg-1"></div>
+                <div class="col-xxl-4 col-xl-3 col-lg-3 mobiledropdown">
+                    <div class="row g-0">
+                        <div class="col-lg-2">
+@*                             <label for="Country" class="form-label heading16 labelspacing" id="Country_L">  الدولة:</label>
+ *@                        </div>
+                        <!-- الدولة/قائمة منسدلة -->
+                        <div class="col-lg-10" style="padding-right: 8px">
+                                <div style="position: relative;">
+                                    <select name="countryId" onchange="submitFilterForm()"
+                                            class="form-select heading15"
+                                            style="width: 100%; padding-right: 30px; background-image: none !important; border-color: #C81589;">
+                                        <option value="">البلد</option>
+                                        @foreach (var country in Model.Countries)
+                                        {
+                                            var isSelected = Model.countryId == country.countryId; // استخدم countryId الصحيح
+                                                                                                   <option value="@country.countryId" selected="@(isSelected ? "selected" : null)">
+                                                                                                       @country.countryArabic
+                                                                                                   </option>
+                                        }
+                                    </select>
+                                    <i class="fa-solid fa-caret-down"
+                                       style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            @*   <form method="get" id="countryForm">
+                            <div class="input-group">
+                                <input class="form-control" type="search" value="" id="countrySearch" onkeyup="filterCountry()" placeholder="Search Country...">
+                                <input type="hidden" id="selectedCountryId" name="countryId">                                 <span class="input-group-append">
+                                    <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            </form>
+                            <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+
+                                @foreach (var country in Model.Countries)
+                                {
+                                    <li class="list-group-item country-item" data-id="@country.countryId">
+                                        @country.countryArabic
+                                    </li>
+                                }
+                            </ul>
+ *@
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+            </div>
+            <div class="partspacing"></div>
+
+            <table>
+
+                <thead class="table-light">
+                    <tr style="background: #ecebea">
+
+                        <th>اسم الوكيل</th>
+                        <th>الدولة</th>
+                        <th>المدينة</th>
+                        <th>رقم الهاتف</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الحالة</th>
+
+                        <th> </th>
+
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var agent in Model.Agents)
+                    {
+                        <tr>
+
+                            <td data-label="Agent Name" class="readsub">@agent.agentNameArabic</td>
+                            <td data-label="Country" class="readsub">@agent.country</td>
+                            <td data-label="City" class="readsub">@agent.city</td>
+                            <td data-label="Phone Number" class="readsub">@agent.agentPhone</td>
+                            <td data-label="Email">@agent.agentEmail</td>
+                            <td data-label="Status" class="readsub">@agent.agentStatus</td>
+
+                            <td data-label="" class="heading16 readsub">
+                            <a href="@Url.Action("AgentInfo", "AdminAr", new { agentId = agent.agentId })" target="_blank">المزيد...</a>
+
+                            
+                            </td>
+                        </tr>
+
+                    }
+
+
+
+
+
+                </tbody>
+            </table>
+        <nav aria-label="Page navigation example">
+            <ul class="pagination" style="justify-content: center; align-items: center;">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("AgentList", new { page = i, countryId = Model.countryId, search = Model.SearchTerm })">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+        </div>
+    </div>
+
+</main>
+<script>
+     let isDropdownChanged = false;
+
+    function submitFilterForm() {
+        isDropdownChanged = true;
+        document.getElementById("filterForm").submit();
+    }
+
+        document.getElementById("filterForm").addEventListener("submit", function (e) {
+        // تحقق إذا المستخدم اختار من دروب داون
+        if (!isDropdownChanged) {
+            // نعمل submit يدوي بدون ما نخليه يعتمد على دروب داون
+            e.preventDefault(); // نوقف السبميت الطبيعي
+            this.submit(); // ونعمل السبميت بعد التأكد
+        }
+
+        // أرجع القيمة الأصلية
+        isDropdownChanged = false;
+    });
+    // Function to filter countries in the dropdown
+    function filterCountry() {
+        var input, filter, list, items, i, txtValue;
+        input = document.getElementById('countrySearch');
+        filter = input.value.toUpperCase();
+        list = document.getElementById('countryOptions');
+        items = list.getElementsByTagName('li');
+
+        // If input is not empty, display the options
+        if (input.value.length > 0) {
+            list.style.display = "block"; // Show options
+        } else {
+            list.style.display = "none"; // Hide options when input is empty
+        }
+
+        // Loop through all options and hide those that don't match the search
+        for (i = 0; i < items.length; i++) {
+            txtValue = items[i].textContent || items[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                items[i].style.display = "";
+            } else {
+                items[i].style.display = "none";
+            }
+        }
+    }
+
+    // Function to populate the input field with the selected country and trigger form submission
+    document.querySelectorAll('.country-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            
+            var countryName = item.innerText;
+            var countryId = item.getAttribute('data-id');
+
+            // Populate the input field with the selected country
+            document.getElementById('countrySearch').value = countryName;
+
+            // Store the countryId in a hidden input for later use
+            document.getElementById('selectedCountryId').value = countryId;
+
+            // Hide the options list
+            document.getElementById('countryOptions').style.display = "none";
+
+            // Submit the form with the selected countryId
+            document.getElementById('countryForm').submit(); // Automatically submit the form
+        });
+    });
+</script>

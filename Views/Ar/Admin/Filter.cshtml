@@ -1,0 +1,180 @@
+﻿@model University_Agent_System.Models.ViewModel.StudentListViewModel
+
+@{
+    Layout = "_LayoutAdminAr";
+    var selectedTab = Context.Request.Query["tab"].ToString()?.ToLower() ?? "tab1";
+    if (string.IsNullOrEmpty(selectedTab)) selectedTab = "tab1";
+
+}
+<main>
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="row">
+
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">بحث خاص بالوكيل</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <div class="col-lg-8">
+                        <label for="dropdown1" class="heading15" style="display: block; margin-bottom: 5px;">
+                            اسم الوكيل:  <span id="agentName">@Model.agentName</span>
+                        </label>
+                        <div style="position: relative;">
+                         <form method="get">
+                                <input type="hidden" name="agentId" value="@Model.agentId" />
+                                <input type="hidden" name="agentName" value="@Model.agentName" />
+                                <select name="SelectedAcademicYear" asp-for="SelectedAcademicYear" onchange="this.form.submit()" class="form-select heading15" id="dropdown1" style="width: 100%; padding-right: 30px; border-color: #C81589;">
+                                    <option value="0" selected>Academic Year</option>
+                                    @foreach (var year in Model.AcadimicYears)
+                                    {
+                                        <option value="@year.Value">@year.Text</option>
+                                    }
+                                </select>
+                            </form>
+                            <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        </div>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+
+                <div class="partspacing"></div>
+
+                <h2 class="heading14">السنة الأكادمية @Model.SelectedAcademicYear</h2>
+
+                <div id="tabs" style="margin-top: 10px;">
+                    <!-- تبويبات التنقل -->
+                    <ul class="nav nav-pills nav-justified">
+                        <li class="nav-item">
+                            <a class="nav-link @(selectedTab == "tab1" ? "active" : "")" href="?SelectedAcademicYear=@Model.SelectedAcademicYear&tab=tab1&agentId=@Model.agentId&agentName=@Model.agentName"><p>الفصل الأول</p></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(selectedTab == "tab2" ? "active" : "")" href="?SelectedAcademicYear=@Model.SelectedAcademicYear&tab=tab2&agentId=@Model.agentId&agentName=@Model.agentName"><p> الفصل الثاني </p></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(selectedTab == "tab3" ? "active" : "")" href="?SelectedAcademicYear=@Model.SelectedAcademicYear&tab=tab3&agentId=@Model.agentId&agentName=@Model.agentName"><p>الفصل الصيفي</p></a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane container-fluid @(selectedTab == "tab1" ? "active show" : "")" id="tab1">
+                            <div class="partspacing"></div>
+                            <div class="row">
+                                <div class="col-lg-2"></div>
+                                <div class="col-lg-8">
+                                    <div class="countersection">
+                                        <h2 class="countertitle">
+                                            <p><span class="heading8">إجمالي عدد الطلاب للفصل الأول @Model.SelectedAcademicYear</span></p>
+                                        </h2>
+                                        <span class="countercorner" style="  "></span>
+                                        <div class="counterposition">
+                                            <div class="counterarea heading5" style="background-color: #264C9F;">
+                                                <span style="color:inherit;" data-toggle="counterUp">@Model.FirstSemesterStudents?.Count()</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2"></div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane container-fluid @(selectedTab == "tab2" ? "active show" : "")" id="tab2">
+                            <div class="partspacing"></div>
+                            <div class="row">
+                                <div class="col-lg-2"></div>
+                                <div class="col-lg-8">
+                                    <div class="countersection">
+                                        <h2 class="countertitle">
+                                            <p><span class="heading8">إجمالي عدد الطلاب للفصل الثاني @Model.SelectedAcademicYear:</span></p>
+                                        </h2>
+                                        <span class="countercorner" style="  "></span>
+                                        <div class="counterposition">
+                                            <div class="counterarea heading5" style="background-color: #264C9F;">
+                                                <span style="color:inherit;" data-toggle="counterUp">@Model.SecondSemesterStudents?.Count()</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2"></div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane container-fluid @(selectedTab == "tab3" ? "active show" : "")" id="tab3">
+                            <div class="partspacing"></div>
+                            <div class="row">
+                                <div class="col-lg-2"></div>
+                                <div class="col-lg-8">
+                                    <div class="countersection">
+                                        <h2 class="countertitle">
+                                            <p><span class="heading8">إجمالي عدد الطلاب للفصل الصيفي @Model.SelectedAcademicYear:</span></p>
+                                        </h2>
+                                        <span class="countercorner" style="  "></span>
+                                        <div class="counterposition">
+                                            <div class="counterarea heading5" style="background-color: #264C9F;">
+                                                <span style="color:inherit;" data-toggle="counterUp">@Model.SummerSemesterStudents?.Count()</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid padding margin">
+        <div class="row">
+            <div class="col-lg-2"></div>
+            <div class="col-lg-8">
+                <table>
+
+                    <thead class="table-light">
+                        <tr style="background: #ecebea">
+                            <th>اسم الطالب</th>
+                            <th>التخصص</th>
+                            <th>رقم الهاتف</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            var students = selectedTab switch
+                            {
+                                "tab1" => Model.FirstSemesterStudents,
+                                "tab2" => Model.SecondSemesterStudents,
+                                "tab3" => Model.SummerSemesterStudents,
+                                _ => Model.FirstSemesterStudents
+                            };
+
+                            if (students != null && students.Any())
+                            {
+                                foreach (var student in students)
+                                {
+                                    <tr>
+                                        <td data-label="Student Name" class="readsub">@student.studentNameEnglish</td>
+                                        <td data-label="Major" class="readsub">@student.Major_Name_S</td>
+                                        <td data-label="Phone Number" class="readsub">@student.studentPhone</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3">No students found for this semester.</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-lg-2"></div>
+        </div>
+    </div>
+</main>

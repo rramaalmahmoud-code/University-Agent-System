@@ -1,0 +1,137 @@
+﻿ @inject University_Agent_System.Services.AgentHelper agentHelper
+@{
+    
+    var agentStatus = agentHelper.GetAgentStatus();
+
+}
+@{
+    string currentAction = ViewContext.RouteData.Values["action"].ToString();
+    string currentController = ViewContext.RouteData.Values["controller"].ToString();
+    string newLang = currentController.Contains("Ar") ? "en" : "ar";
+    string newController = currentController.Contains("Ar")
+        ? currentController.Replace("Ar", "En")
+        : currentController.Replace("En", "Ar");
+
+  
+
+    object routeValues;
+    var studentIdQuery = Context.Request.Query["studentId"].FirstOrDefault();
+
+    // 👇 اختاري إذا في ID أو لا
+    if (ViewContext.RouteData.Values.ContainsKey("id"))
+    {
+        routeValues = new { culture = newLang, id = ViewContext.RouteData.Values["id"] };
+    }
+    else if (!string.IsNullOrEmpty(studentIdQuery))
+    {
+        routeValues = new { culture = newLang, studentId = studentIdQuery };
+    }
+    else
+    {
+        routeValues = new { culture = newLang };
+    }
+}
+
+<nav id="opacity" class="navbar navbar-expand-xl navbar-dark sticky-top opacity container-fluid custom"
+     style="background: rgb(38, 76, 159); position: relative; opacity: 1; padding-top: 0px; padding-bottom: 0px;
+            box-shadow: rgba(37, 36, 104, 0.9) 0px 8px 9px 0px;">
+
+    <a id="logo" class="navbar-brand logo" href="https://www.ammanu.edu.jo/" style="height: 102.5px; background: rgb(218, 163, 40);">
+        <img src="../../images/aau-logo.png" style="max-width: 60px; margin-top: 5px;">
+
+        <h1>
+            <p style="display:flex"><span class="heading15" style="color: #ffffff;">جامعــة عمــان </span></p>
+            <p style="display:flex"><span class="heading15" style="color: #ffffff;">الأهـليــة</span></p>
+
+        </h1>
+
+        <div id="vl" class="vl" style="display: none;"></div>
+    </a>
+    <div id="langarea" class="langarea" style="height: 102.5px; background: rgb(218 163 40);">
+    <a style="color: rgb(252, 195, 11); margin-left: 20px; margin-right: 20px; top: 7px;"
+       id="lang" class="lang heading17"
+       href="@Url.Action(currentAction, newController, routeValues)">
+        @((newLang == "ar") ? "العربية" : "English")
+    </a>
+    </div>
+    <!-- One of the primary actions on mobile is to call a business - This displays a phone button on mobile only -->
+    <div class="navbar-toggler-right mobbar">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar"
+                aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="تبديل التنقل">
+            <svg style="font-size: 28px !important;font-weight: 800 !important;"
+                 class="svg-inline--fa fa-bars" aria-hidden="true" focusable="false" data-prefix="fas"
+                 data-icon="bars" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"
+                 data-fa-i2svg="">
+                <path fill="currentColor" d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="collapse navbar-collapse flex-column" id="navbar">
+        <ul id="First" class="navbar-nav  w-100 justify-content-start" style="background: #252468;">
+            <li class="nav-item ">
+                <a class="nav-link heading13" style="color: rgb(252, 195, 11); padding-top: 10px; padding-bottom: 0px;" href="Home.html">نظام القبول المبدئي للوكلاء<span class="sr-only">(الحالي)</span></a>
+            </li>
+        </ul>
+
+        <ul id="Second" class="navbar-nav justify-content-start w-100" style="background: rgb(38, 76, 159);">
+     @*        <li class="nav-item ">
+                <a class="nav-link heading15" style="color: ; background: ; font-weight: 400;" href="Home.html">الرئيسية</a>
+            </li>
+ *@
+
+
+            @if (agentStatus != "Expired")
+            {
+                <li class="nav-item ">
+               
+                    <a class="nav-link heading15" style="color: ; background: ; font-weight: 400;" href="@Url.Action("AddStudent", "Ar")">إضافة طالب جديد</a>
+
+
+                </li>
+
+            }
+         
+
+            <li class="nav-item ">
+                <a class="nav-link heading15" style="color: ; background: ; font-weight: 400;" href="@Url.Action("StudentList", "AdminAr")">قائمة الطلاب</a>
+            </li>
+        </ul>
+    </div>
+
+    <a href="#" class="profilelink" id="profileToggle">
+        الوكيل
+        <svg class="svg-inline--fa fa-user" aria-hidden="true" focusable="false" data-prefix="fas"
+             data-icon="user" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg="">
+            <path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"></path>
+        </svg>
+    </a>
+@*     <a class="profilelink" id="profileToggle">
+        الوكيل
+        <svg class="svg-inline--fa fa-user" aria-hidden="true" focusable="false" data-prefix="fas"
+             data-icon="user" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" data-fa-i2svg="">
+            <path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"></path>
+        </svg>
+    </a>
+ *@    <div id="dropdownMenu" style="display: none; position: absolute; top: 100%; left: 5%; background: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); border-radius: 5px; min-width: 120px; z-index: 9999; text-align: left;">
+        <a href="@Url.Action("Logout", "En")" style="padding: 10px 15px; display: block; text-decoration: none; color: #333;">خروج</a>
+    </div>
+    <script>
+        const toggle = document.getElementById('profileToggle');
+        const menu = document.getElementById('dropdownMenu');
+
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!toggle.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        });
+    </script>
+
+</nav>
+
+

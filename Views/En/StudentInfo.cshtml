@@ -1,0 +1,113 @@
+﻿
+@{
+    Layout = "_Layout";
+}
+<main>
+    <div class="container-fluid padding margin">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">STUDENT INFO</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+
+                <div class="row g-5">
+                    <div class="col-lg-3">
+                    </div>
+                    <div class="col-lg-6">
+                        <p class="read" style="position: relative; top: 25px; ">
+                            Status: <span style="color: #daa328;">@Model.isActive</span>
+                        </p>
+
+                        <div style="display: flex; justify-content: end; gap: 10px; padding-bottom: 10px;">
+                            <a href="@Url.Action("EditStudent","En", new { studentId = @Model.studentId })" style="color: #264C9F;   z-index: 1;"><i class="fa-solid fa-pen-to-square"></i>Edit</a>
+                         @*    <a href="Delete" style="color: #264C9F;"><i class="fa-solid fa-trash"></i>Delete</a> *@
+                            
+                        </div>
+
+                        <div class="cardcontainer">
+                            <div class="card card10" style="border-top: 4px solid #252486;">
+                                @if (!string.IsNullOrEmpty(Model.studentPicture))
+                                {
+                                    <img src="@Url.Content($"~{Model.studentPicture}")"
+                                         alt="Student Image"
+                                         style="width:30%; height:auto;"
+                                         class="card-img-right" />
+                                }
+                                else
+                                {
+                                    <img src="../../../images/Artboard 2Human.jpg" style="   width:30%;height:auto;  " class="card-img-right" alt="WHED3">
+                                }                              
+                               
+                                <div class="card-body">
+                                    <div class="card-text">
+                                        <h2 class="heading14">@Model.studentNameEnglish</h2>
+                                        <div>
+                                            <label class="read">Approved By Student:</label>
+                                            <label class="read">@Model.isApproved</label>
+                                        </div>
+                                        <div class="rowspacing"></div>
+                                        <div>
+                                            <label class="normal">ID:</label>
+                                            <label class="read" style="color: #daa328">@Model.nationalId</label>
+                                        </div>
+                                        <div>
+                                            <label class="normal">Nationality:</label>
+                                            <label class="normal">@Model.Nationality</label>
+                                        </div>
+                                        <div>
+                                            <label class="normal">@Model.Country-@Model.city</label>
+                                        </div>
+                                        <div>
+                                            <label class="normal">Phone Number:</label>
+                                            <label class="normal">@Model.studentPhone</label>
+                                        </div>
+                                        <div class="rowspacing"></div>
+                                        <div>
+                                            <label class="read">@Model.Degree -@Model.Faculty_Name_S </label>
+                                        </div>
+                                        <div>
+                                            <label class="read">@Model.Major_Name_S </label>
+                                        </div>
+                                        <div class="partspacing"></div>
+                                        <div>
+                                            <label class="read">@Model.Semester</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="Emailnphone">
+                            <div class="Email2">
+                                <div style="font-weight:bold;" class="Emailtext2"><p>@Model.studentEmail</p></div>
+                            </div>
+                            <div class="phone2">
+                                <div style="font-weight:bold;" class="phonetext2"><p>@Model.studentCode</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3"></div>
+                </div>
+
+
+
+            </div>
+
+
+
+
+
+
+        </div>
+
+
+
+
+
+    </div>
+
+</main>

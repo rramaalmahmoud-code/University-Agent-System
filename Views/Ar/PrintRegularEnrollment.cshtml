@@ -1,0 +1,1018 @@
+﻿@using University_Agent_System.Models
+@using University_Agent_System.Models.ViewModel
+@using University_Agent_System.Models.Oracle
+@model StudentViewModel
+
+@{
+    Layout = null;
+
+    var nationalities = Model.Nationalities as List<nationality>;
+    var countries = Model.Countries as List<country>;
+    var agents = Model.Agents as List<agent>;
+    var faculties = Model.Faculties as List<FacultyWithProgramsViewModel>;
+
+    var selectedNationality = nationalities?.FirstOrDefault(n => n.nationalityId == Model.nationalityId)?.nationalityArabic;
+    var selectedCountry = countries?.FirstOrDefault(c => c.countryId == Model.countryId)?.countryArabic;
+    var selectedCountry0 = countries?.FirstOrDefault(c => c.countryId == Model.countryId0)?.countryArabic;
+    var selectedCountry1 = countries?.FirstOrDefault(c => c.countryId == Model.countryId1)?.countryArabic;
+    var selectedCountry2 = countries?.FirstOrDefault(c => c.countryId == Model.countryId2)?.countryArabic;
+    var selectedCountry3 = countries?.FirstOrDefault(c => c.countryId == Model.countryId3)?.countryArabic;
+    var selectedAgent = agents?.FirstOrDefault(a => a.agentId == Model.agentId)?.agentNameArabic;
+
+    var selectedFaculty = faculties?.FirstOrDefault(f => f.Faculty_no == Model.Faculty_no)?.Faculty_Name;
+
+    var selectedMajor = faculties?
+        .Where(f => f.Programs != null)
+        .SelectMany(f => f.Programs)
+        .FirstOrDefault(p => p.major_no == Model.major_no)?.MAJOR_NAME;
+
+    string Show(object value) => string.IsNullOrWhiteSpace(Convert.ToString(value)) ? "" : Convert.ToString(value);
+    string ShowDate(DateOnly? value) => value.HasValue ? value.Value.ToString("yyyy/MM/dd") : "";
+    string Box(bool value) => value ? "☑" : "☐";
+
+    bool isMale = Model.studentGender == 1;
+    bool isFemale = Model.studentGender == 0;
+
+    bool hasDisability = Model.isDisabled == 1;
+    bool noDisability = !hasDisability;
+
+    bool hasPreviousAAU = Model.isPreviousAAU == 1;
+    bool noPreviousAAU = !hasPreviousAAU;
+
+    bool personalAdmission = string.Equals(Model.admissionType, "PERSONAL", StringComparison.OrdinalIgnoreCase);
+    bool agentAdmission = string.Equals(Model.admissionType, "AGENT", StringComparison.OrdinalIgnoreCase);
+
+    var uniLogo = Url.Content("~/images/aau-logo.png");
+    var footerImage = Url.Content("~/images/footer-aau.jpg");
+    var staticInfoImage = Url.Content("~/images/print/static-page2-info.png");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <title>طلب الالتحاق للدراسة النظامية درجة البكالوريوس</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #efefef;
+            font-family: Tahoma, Arial, sans-serif;
+            color: #111;
+            direction: rtl;
+        }
+
+        .print-bar {
+            text-align: center;
+            margin: 14px 0;
+        }
+
+        .print-btn {
+            background: #252468;
+            color: #fff;
+            border: 0;
+            padding: 10px 24px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+
+        @@page {
+            size: A4;
+            margin: 0;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            margin: 10px auto;
+            background: #fff;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            padding: 10mm 12mm 34mm 12mm;
+        }
+
+        .page-break {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .page-content {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            border-bottom: 1px solid #666;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr 90px 1fr;
+            align-items: start;
+        }
+
+        .header-left {
+            text-align: left;
+            font-size: 13px;
+            padding-top: 4px;
+        }
+
+        .header-center {
+            text-align: center;
+        }
+
+            .header-center img {
+                width: 52px;
+                height: 52px;
+                object-fit: contain;
+                display: block;
+                margin: 0 auto 4px auto;
+            }
+
+            .header-center .dept {
+                font-size: 13px;
+                font-weight: bold;
+            }
+
+        .header-right {
+            text-align: right;
+            font-size: 13px;
+            padding-top: 4px;
+            font-weight: bold;
+        }
+
+        .title-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px;
+            align-items: center;
+            gap: 20px;
+            margin: 12px 0 14px 0;
+        }
+
+        .photo-box {
+            border: 1px solid #666;
+            height: 78px;
+            width: 48px;
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+            .photo-box img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .title-box {
+            border: 1px solid #666;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 10px 16px;
+            line-height: 1.7;
+        }
+
+        .line-grid-3,
+        .line-grid-4,
+        .line-grid-2 {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: end;
+        }
+
+        .line-grid-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .line-grid-4 {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .line-grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .name-grid-ar {
+            display: grid;
+            grid-template-columns: 150px 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 6px;
+            align-items: end;
+        }
+
+        .name-grid-en {
+            display: grid;
+            grid-template-columns: 260px 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 6px;
+            align-items: end;
+        }
+
+        .en-caption {
+            font-size: 10px;
+            line-height: 1.3;
+            text-align: left;
+            direction: ltr;
+            font-weight: bold;
+        }
+
+        .field {
+            display: flex;
+            align-items: end;
+            gap: 4px;
+            min-height: 24px;
+            font-size: 12px;
+        }
+
+        .label {
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .fill {
+            flex: 1;
+            min-height: 18px;
+            border-bottom: 1px dotted #555;
+            padding: 0 2px 1px 2px;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+            .fill.center {
+                text-align: center;
+            }
+
+        .inline-checks {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .checkbox-text {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .section-caption {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 10px 0 4px 0;
+        }
+
+        .footer {
+            position: absolute;
+            left: 12mm;
+            right: 12mm;
+            bottom: 8mm;
+            height: 20mm;
+            overflow: hidden;
+        }
+
+            .footer img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+            }
+
+        .static-info-wrap {
+            margin-top: 18px;
+        }
+
+            .static-info-wrap img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+
+        .undertaking-block {
+            margin-top: 14px;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        .undertaking-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 8px 0 14px 0;
+        }
+
+        .undertaking-block p {
+            margin: 0 0 8px 0;
+            text-align: justify;
+        }
+
+        .undertaking-list {
+            margin: 8px 18px 0 0;
+            padding: 0;
+        }
+
+            .undertaking-list li {
+                margin-bottom: 6px;
+            }
+
+        .declaration-block {
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 2;
+        }
+
+        .declaration-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .signature-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 18px;
+            margin-bottom: 20px;
+        }
+
+        .signature-field {
+            display: flex;
+            align-items: end;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .signature-line {
+            flex: 1;
+            border-bottom: 1px dotted #555;
+            min-height: 18px;
+        }
+
+        .office-use-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 22px 0 14px 0;
+        }
+
+        .office-use-block {
+            font-size: 12px;
+            line-height: 2;
+        }
+
+        .office-use-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 10px;
+        }
+
+        .office-use-line {
+            display: flex;
+            align-items: end;
+            gap: 6px;
+        }
+
+            .office-use-line .line {
+                flex: 1;
+                border-bottom: 1px dotted #555;
+                min-height: 18px;
+            }
+
+        .office-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+            .office-table th,
+            .office-table td {
+                border: 1px solid #666;
+                padding: 6px 8px;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .office-table th {
+                font-weight: bold;
+            }
+
+        .office-note {
+            margin-top: 10px;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .third-page-spacer {
+            height: 8px;
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+            }
+
+            .print-bar {
+                display: none;
+            }
+
+            .page {
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-bar">
+        <button class="print-btn" type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <!-- PAGE 1 -->
+    <div class="page page-break">
+        <div class="page-content">
+
+            <div class="header">
+                <div class="header-grid">
+                    <div class="header-left">Al-Ahliyya Amman University</div>
+
+                    <div class="header-center">
+                        <img src="@uniLogo" alt="AAU Logo" onerror="this.style.display='none';" />
+                        <div class="dept">دائرة القبول والتسجيل</div>
+                    </div>
+
+                    <div class="header-right">جامعة عمان الأهلية</div>
+                </div>
+            </div>
+
+            <div class="title-row">
+                <div></div>
+
+                <div class="title-box">
+                    طلب الالتحاق للدراسة النظامية<br />
+                    درجة البكالوريوس
+                </div>
+
+                <div class="photo-box">
+                    @if (!string.IsNullOrWhiteSpace(Model.studentPicturePath))
+                    {
+                        <img src="@Model.studentPicturePath" alt="الصورة الشخصية" />
+                    }
+                    else
+                    {
+                        <div>صورة<br />شخصية</div>
+                    }
+                </div>
+            </div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">رقم جامعي:</span>
+                    <span class="fill">@Show(Model.studentNumber)</span>
+                </div>
+                <div class="field">
+                    <span class="label">الكلية:</span>
+                    <span class="fill">@Show(selectedFaculty)</span>
+                </div>
+                <div class="field">
+                    <span class="label">التخصص:</span>
+                    <span class="fill">@Show(selectedMajor)</span>
+                </div>
+            </div>
+
+            <div class="name-grid-ar">
+                <div class="field"><span class="label">اسم الطالب (رباعي):</span></div>
+                <div class="field"><span class="label">الاسم الأول</span></div>
+                <div class="field"><span class="label">اسم الأب</span></div>
+                <div class="field"><span class="label">اسم الجد</span></div>
+                <div class="field"><span class="label">اسم العائلة</span></div>
+            </div>
+
+            <div class="name-grid-ar">
+                <div></div>
+                <div class="fill center">@Show(Model.ArabicFirstName)</div>
+                <div class="fill center">@Show(Model.ArabicFatherName)</div>
+                <div class="fill center">@Show(Model.ArabicGrandFatherName)</div>
+                <div class="fill center">@Show(Model.ArabicFamilyName)</div>
+            </div>
+
+            <div class="name-grid-en" dir="ltr">
+                <div class="en-caption">
+                    Student Name (Full Name):<br />
+                    According to the passport (for non-Jordanian)
+                </div>
+                <div class="field"><span class="label">First Name</span></div>
+                <div class="field"><span class="label">Father's Name</span></div>
+                <div class="field"><span class="label">Grandfather's Name</span></div>
+                <div class="field"><span class="label">Last Name</span></div>
+            </div>
+
+            <div class="name-grid-en" dir="ltr">
+                <div></div>
+                <div class="fill center">@Show(Model.EnglishFirstName)</div>
+                <div class="fill center">@Show(Model.EnglishFatherName)</div>
+                <div class="fill center">@Show(Model.EnglishGrandFatherName)</div>
+                <div class="fill center">@Show(Model.EnglishFamilyName)</div>
+            </div>
+
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">الجنسية:</span>
+                    <span class="fill">@Show(selectedNationality)</span>
+                </div>
+                <div class="field">
+                    <span class="label">اسم الأم:</span>
+                    <span class="fill">@Show(Model.motherName)</span>
+                </div>
+            </div>
+            <div style="background-color: #66666694;padding-bottom: 10px;">
+            <div class="section-caption">مكان الولادة</div>
+            
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">البلد:</span>
+                    <span class="fill">@Show(selectedCountry0)</span>
+                </div>
+                <div class="field">
+                    <span class="label">المدينة:</span>
+                    <span class="fill">@Show(Model.city)</span>
+                </div>
+                <div class="field">
+                    <span class="label">تاريخ الولادة:</span>
+                    <span class="fill">@ShowDate(Model.dateOfBirth)</span>
+                </div>
+            </div>
+            </div>
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">الرقم الوطني/خاص بالأردنيين:</span>
+                    <span class="fill">@Show(Model.nationalId)</span>
+                </div>
+                <div class="field">
+                    <span class="label">الجنس:</span>
+                    <span class="inline-checks">
+                        <span class="checkbox-text">@Box(isMale) ذكر</span>
+                        <span class="checkbox-text">@Box(isFemale) أنثى</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">وثيقة إثبات الشخصية:</span>
+                    <span class="fill">@Show(Model.docId)</span>
+                </div>
+                <div class="field">
+                    <span class="label">تاريخ الصدور:</span>
+                    <span class="fill">@ShowDate(Model.createdDate)</span>
+                </div>
+                <div class="field">
+                    <span class="label">تاريخ الانتهاء:</span>
+                    <span class="fill">@ShowDate(Model.expiredDate)</span>
+                </div>
+            </div>
+            <div style="background-color: #66666694;padding-bottom: 10px;">
+            <div class="section-caption">عنوان الطالب</div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">البلد:</span>
+                    <span class="fill">@Show(selectedCountry)</span>
+                </div>
+                <div class="field">
+                    <span class="label">المدينة:</span>
+                    <span class="fill">@Show(Model.cityAdd)</span>
+                </div>
+                <div class="field">
+                    <span class="label">الهاتف:</span>
+                    <span class="fill">@Show(Model.studentPhone)</span>
+                </div>
+            </div>
+            </div>
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">هل يعاني الطالب من أي نوع من أنواع الإعاقات؟</span>
+                    <span class="inline-checks">
+                        <span class="checkbox-text">@Box(noDisability) لا</span>
+                        <span class="checkbox-text">@Box(hasDisability) نعم</span>
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">حدد نوع الإعاقة:</span>
+                    <span class="fill">@Show(Model.disabilityType)</span>
+                </div>
+            </div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">هل التحقت بجامعة عمان الأهلية سابقاً؟</span>
+                    <span class="inline-checks">
+                        <span class="checkbox-text">@Box(noPreviousAAU) لا</span>
+                        <span class="checkbox-text">@Box(hasPreviousAAU) نعم</span>
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">الرقم الجامعي السابق:</span>
+                    <span class="fill">@Show(Model.previousStudentId)</span>
+                </div>
+                <div class="field">
+                    <span class="label">التخصص:</span>
+                    <span class="fill">@Show(Model.previousMajor)</span>
+                </div>
+            </div>
+            <div style="background-color: #66666694;padding-bottom: 10px;">
+            <div class="section-caption">الشهادة الثانوية:</div>
+
+            <div class="line-grid-4">
+                <div class="field">
+                    <span class="label">مصدرها:</span>
+                    <span class="fill">@Show(selectedCountry3)</span>
+                </div>
+                <div class="field">
+                    <span class="label">فرع الشهادة:</span>
+                    <span class="fill">@Show(Model.schoolBranch)</span>
+                </div>
+                <div class="field">
+                    <span class="label">نوعها:</span>
+                    <span class="fill">@Show(Model.certificateType)</span>
+                </div>
+                <div class="field">
+                    <span class="label">المعدل:</span>
+                    <span class="fill">@Show(Model.studentGPA)</span>
+                </div>
+            </div>
+            </div>
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">اسم المدرسة:</span>
+                    <span class="fill">@Show(Model.studentSchool)</span>
+                </div>
+                <div class="field">
+                    <span class="label">سنة الحصول عليها:</span>
+                    <span class="fill">@Show(Model.certificateYear)</span>
+                </div>
+                <div class="field">
+                    <span class="label">رقم الجلوس:</span>
+                    <span class="fill">@Show(Model.seatNumber)</span>
+                </div>
+            </div>
+
+            <div class="section-caption">شهادة الدبلوم (خاصة بطلبة التجسير)</div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">مصدرها:</span>
+                    <span class="fill">@Show(selectedCountry1)</span>
+                </div>
+                <div class="field">
+                    <span class="label">التخصص:</span>
+                    <span class="fill">@Show(Model.schoolMajor)</span>
+                </div>
+                <div class="field">
+                    <span class="label">معدل الشامل:</span>
+                    <span class="fill">@Show(Model.studentDiplomaGPA)</span>
+                </div>
+            </div>
+
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">اسم الكلية:</span>
+                    <span class="fill">@Show(Model.studentFaculty)</span>
+                </div>
+                <div class="field">
+                    <span class="label">سنة الحصول عليها:</span>
+                    <span class="fill">@Show(Model.certificateYearDip)</span>
+                </div>
+            </div>
+
+        </div>
+@*         <div class="footer">
+            <div class="footer-left">
+                <div class="footer-stamp">ISO</div>
+                <div class="footer-iso">
+                    SS-F22-02-001, Rev. 9<br />
+                    Ref.: 2033/2022 - 2023<br />
+                    Date: 26/06/2023
+                </div>
+            </div>
+
+            <div class="footer-stamp">
+                وثيقة<br />معتمدة
+            </div>
+        </div>
+ *@
+
+        <div class="footer">
+            <img src="@footerImage" alt="Footer" onerror="this.style.display='none';" />
+        </div>
+    
+
+</div>
+
+    <!-- PAGE 2 -->
+    <div class="page">
+        <div class="page-content">
+
+            <div class="header">
+                <div class="header-grid">
+                    <div class="header-left">Al-Ahliyya Amman University</div>
+
+                    <div class="header-center">
+                        <img src="@uniLogo" alt="AAU Logo" onerror="this.style.display='none';" />
+                        <div class="dept">دائرة القبول والتسجيل</div>
+                    </div>
+
+                    <div class="header-right">جامعة عمان الأهلية</div>
+                </div>
+            </div>
+
+            <div class="section-caption" style="margin-top:8px;">خاص بالمنتقلين من جامعات أخرى</div>
+
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">اسم الجامعة:</span>
+                    <span class="fill">@Show(Model.studentUniversity)</span>
+                </div>
+                <div class="field">
+                    <span class="label">مصدرها:</span>
+                    <span class="fill">@Show(selectedCountry2)</span>
+                </div>
+            </div>
+            <div style="background-color: #66666694;padding-bottom: 10px;">
+            <div class="line-grid-2">
+                <div class="field">
+                    <span class="label">طريقة القبول:</span>
+                    <span class="inline-checks">
+                        <span class="checkbox-text">@Box(personalAdmission) شخصي</span>
+                        <span class="checkbox-text">@Box(agentAdmission) بواسطة (وكيل معتمد / مكتب)</span>
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">اسم المكتب:</span>
+                    <span class="fill">@Show(selectedAgent)</span>
+                </div>
+            </div>
+            </div>
+            <div class="section-caption">أسماء المعرفين</div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">1. الاسم:</span>
+                    <span class="fill">@Show(Model.Referrer1Name)</span>
+                </div>
+                <div class="field">
+                    <span class="label">صلة القرابة:</span>
+                    <span class="fill">@Show(Model.Referrer1Relation)</span>
+                </div>
+                <div class="field">
+                    <span class="label">هاتف:</span>
+                    <span class="fill">@Show(Model.Referrer1Phone)</span>
+                </div>
+            </div>
+
+            <div class="line-grid-3">
+                <div class="field">
+                    <span class="label">2. الاسم:</span>
+                    <span class="fill">@Show(Model.Referrer2Name)</span>
+                </div>
+                <div class="field">
+                    <span class="label">صلة القرابة:</span>
+                    <span class="fill">@Show(Model.Referrer2Relation)</span>
+                </div>
+                <div class="field">
+                    <span class="label">هاتف:</span>
+                    <span class="fill">@Show(Model.Referrer2Phone)</span>
+                </div>
+            </div>
+
+            <div class="undertaking-block">
+                <div class="undertaking-title" style="background-color: #66666694;">تعهد</div>
+
+                <p>
+                    بعد الاطلاع على جميع شروط القبول والتسجيل في التخصصات المطروحة وتعليمات منح درجة البكالوريوس في جامعة
+                    عمان الأهلية، أتعهد وألتزم بما يأتي:
+                </p>
+
+                <ol class="undertaking-list">
+                    <li>
+                        التقيد التام بالقوانين والأنظمة والتعليمات وقرارات المجالس المعمول بها في جامعة عمان الأهلية .
+                    </li>
+                    <li>
+                        إحضار كشف علامات الثانوية العامة الأصلي مصدقا حسب الأصول من وزارة التربية والتعليم الأردنية,وإحضار كافة الوثائق اللازمة لاستكمال قبولي في الجامعة قبل بدء فصل الالتحاق في الجامعة .
+                    </li>
+                    <li>
+                        إحضار معادلة شهادة الدراسة الثانوية غير الاردنية من وزارة التربية والتعليم الأردنية وتصديقها قبل بدء فصل الالتحاق في الجامعة.
+                    </li>
+                    <li>
+                        في حال انتقال من جامعة أخرى أتعهد:
+                        <ul >
+                            <li>
+إحضار كشف علامات الجامعة الأصلي المنقول منها مصدق من وزارة التعليم العالي والبحث العلمي الأردنية.                
+</li>
+                            <li>
+                                 حسن سيرة وسلوك من الجامعات الأردنية.
+                            </li>
+<li>
+                                إجراء معادلة المواد قبل نهاية الفصل الدراسي الأول لالتحاقي في الجامعة ولا يحق لي المطالبة بمعادلة أي مادة
+
+                                بعد هذا الموعد.
+</li>
+
+
+<li>
+                                إحضار كتاب صادر من وزارة التعليم العالي والبحث العلمي الأردنية يفيد أن الجامعة المنتقل منها والتخصص معترف بهما، وبخلاف ذلك لا تعتمد معادلة المواد ولا تتحمل الجامعة أي مسؤولية قانونية مترتبة على ذلك.
+</li>
+                            </ul>
+                    </li>
+                    <li>
+                        في حال قبولي (تجسيرا) أتعهد بإحضار مصدقة وكشف علامات الدبلوم (كلية المجتمع) الأصلي مصدقا حسب الأصول من وزارة التعليم العالي والبحث العلمي الأردنية وإلا يعد تسجيلي لاغياً، كما وأتعهد بإحضار معادلة شهادة
+                        الدبلوم خاص بالدبلوم الصادر من خارج الأردن فور التحاقي بالجامعة
+                    </li>
+                    <li>
+                        لا تتحمل الجامعة أية مسؤولية قانونية أو مالية يترتب على إلغاء قبولي في الجامعة في حال إخلالي بأي بند مما
+
+                        ورد أعلاه.
+                    </li>
+                    <li>
+                        أتعهد بإحضار دفتر خدمة العلم مجدداً وفق الأصول للطلبة الأردنيين الذكور فقط).
+                    </li>
+                   
+                </ol>
+            </div>
+
+        </div>
+       @*  <div class="footer">
+            <div class="footer-left">
+                <div class="footer-stamp">ISO</div>
+                <div class="footer-iso">
+                    SS-F22-02-001, Rev. 9<br />
+                    Ref.: 2033/2022 - 2023<br />
+                    Date: 26/06/2023
+                </div>
+            </div>
+
+            <div class="footer-stamp">
+                وثيقة<br />معتمدة
+            </div>
+        </div> *@
+
+        <div class="footer">
+            <img src="@footerImage" alt="Footer" onerror="this.style.display='none';" />
+        </div>
+    </div>
+    <div class="page">
+        <div class="page-content">
+
+            <div class="header">
+                <div class="header-grid">
+                    <div class="header-left">Al-Ahliyya Amman University</div>
+
+                    <div class="header-center">
+                        <img src="@uniLogo" alt="AAU Logo" onerror="this.style.display='none';" />
+                        <div class="dept">دائرة القبول والتسجيل</div>
+                    </div>
+
+                    <div class="header-right">جامعة عمان الأهلية</div>
+                </div>
+            </div>
+
+            <div class="declaration-block">
+                <div class="declaration-title">
+                    أقر أنا الطالب <label class="fill center">@Show(Model.studentNameArabic)</label> بأن كافة المعلومات والبيانات في هذا الطلب صحيحة، وأنني أتحمل المسؤولية القانونية والمالية والأخلاقية المترتبة على عدم صحة أي منها ، وأتعهد بأن تكون. وثائقي مصدقة حسب الأصول قبل بدء الدراسة لفصل التحافي بالجامعة، وأتحمل المسؤوليات المترتبة جراء ذلك.
+                    <p>
+                    وأفوض الجامعة إطلاع ولي أمري أو وكيلي على نتائجي الأكاديمية، وعليه أوقع.
+
+                    وأتعهد بإحضار كتاب موافقة من الملحقية الثقافية (           )
+                    </p>
+                </div>
+
+              @*   <p>
+                    بأن جميع المعلومات والبيانات والوثائق التي قمت بتقديمها لغايات الالتحاق بجامعة عمان الأهلية صحيحة
+                    وكاملة، وأتحمل كامل المسؤولية القانونية والأكاديمية والمالية في حال ثبوت خلاف ذلك، كما أوافق على
+                    تطبيق جميع أنظمة الجامعة وتعليماتها النافذة، وأي تعليمات تصدر لاحقاً بهذا الخصوص.
+                </p>
+
+                <p>
+                    كما أتعهد بالالتزام بجميع متطلبات القبول والتسجيل، واستكمال أي وثائق أو إجراءات تطلبها دائرة القبول
+                    والتسجيل أو أي جهة مختصة في الجامعة ضمن المدد المحددة.
+                </p> *@
+
+                <div class="signature-row">
+                    <div class="signature-field">
+                        <span>التاريخ</span>
+                        <span class="signature-line"></span>
+                    </div>
+
+                    <div class="signature-field">
+                        <span>التوقيع</span>
+                        <span class="signature-line"></span>
+                    </div>
+
+                   
+                </div>
+            </div>
+
+        @*     <div class="office-use-title" style="background-color: #66666694;">لاستخدام دائرة القبول والتسجيل</div>
+
+            <div class="office-use-block">
+                <div class="office-use-row">
+                    <div class="office-use-line">
+                        <span>اسم الموظف/المستلم</span>
+                        <span class="line"></span>
+                    </div>
+
+                    <div class="office-use-line">
+                        <span>التاريخ</span>
+                        <span class="line"></span>
+                    </div>
+                </div>
+
+                <div class="office-use-row">
+                    <div class="office-use-line">
+                        <span>رقم طلب الالتحاق</span>
+                        <span class="line"></span>
+                    </div>
+
+                    <div class="office-use-line">
+                        <span>اسم الطالب</span>
+                        <span class="line"></span>
+                    </div>
+                </div>
+
+                <table class="office-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40%;">الرسم</th>
+                            <th style="width:30%;">القيمة بالأردني</th>
+                            <th style="width:30%;">القيمة بالعملة المحلية / الدولار الأمريكي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>رسوم الطلب</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>رسوم التسجيل</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>رسوم الامتحانات / الاختبار</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>بدل طلب الالتحاق لأول مرة</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>رسوم مستحقة أخرى</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>المجموع</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="office-note">
+                    <div class="office-use-row">
+                        <div class="office-use-line">
+                            <span>توقيع الموظف</span>
+                            <span class="line"></span>
+                        </div>
+
+                        <div class="office-use-line">
+                            <span>ختم/ملاحظة</span>
+                            <span class="line"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ *@
+        </div>
+
+        <div class="footer">
+            <img src="@footerImage" alt="Footer" onerror="this.style.display='none';" />
+        </div>
+    </div>
+</body>
+</html>

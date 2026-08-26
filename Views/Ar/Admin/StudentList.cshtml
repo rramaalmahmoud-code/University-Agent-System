@@ -1,0 +1,293 @@
+﻿@using Newtonsoft.Json
+@model University_Agent_System.Models.ViewModel.StudentListViewModel
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@functions {
+    public string GetUserType()
+    {
+        var jwt = Context.Request.Cookies["jwt"];
+        if (string.IsNullOrEmpty(jwt)) return null;
+
+        var handler = new JwtSecurityTokenHandler();
+        var token = handler.ReadJwtToken(jwt);
+        var typeClaim = token.Claims.FirstOrDefault(c => c.Type == "userType");
+        return typeClaim?.Value;
+    }
+}
+
+@{
+    string userType = GetUserType();
+
+    Layout = (userType == "Super Admin" || userType == "Admin") ? "_LayoutAdminAr" : "_LayoutAr";
+
+    string pathPrefix = userType == "Agent" ? "/Ar/StudentInfo/" : "/Ar/Admin/StudentInfo/";
+    int totalPages = (int)Math.Ceiling((double)Model.StudentTotalCount / Model.PageSize);
+        bool isAgent = !string.IsNullOrEmpty(userType) && userType.Equals("Agent", StringComparison.OrdinalIgnoreCase);
+
+
+}
+<main>
+    <div class="container-fluid padding margin">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">قائمة الطلاب</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+            </div>
+
+
+            <div class="partspacing"></div>
+                 <form method="get" asp-action="StudentList" id="filterForm" >
+                <input type="hidden" name="page" id="pageInput" value="1" />
+            <div class="row g-0">
+
+                <div class="col-xxl-5 col-xl-5 col-lg-5">
+                        <input type="text" class="form-control " name="search" value="@Model.SearchTerm" id="studentName" placeholder="ابحث بالاسم أو الرقم" style=" border-color: #C81589; border-radius: 0rem !important; padding: 0.355rem .75rem;">
+
+                </div>
+
+                <div class="col-xxl-2 col-xl-3 col-lg-3">
+                    <!-- زر البحث -->
+                    <div class="btnwrap">
+                            <button type="submit" target="_blank" class="mybtn heading15" style="width: 100%; background: #c81589; border-radius: 0rem !important; border: none;">
+                            بحث <i class="fas fa-search"></i>
+                            <span class="line" style=" border-left: 6px solid #252468; border-bottom: 6px solid #252468; "></span>
+                            <span class="areaborder" style="border: 0px;"></span>
+                        </button>
+                    </div>
+                </div>
+
+
+                <div class="col-xxl-1 col-xl-1 col-lg-1"></div>
+                <div class="col-xxl-4 col-xl-3 col-lg-3 mobiledropdown">
+                    <div style="position: relative;">
+                            <select name="SelectedAcademicYear" asp-for="SelectedAcademicYear"
+                                    onchange="submitFilterForm()"
+                                    class="form-select heading15"
+                                    id="dropdown1"
+                                    style="width: 100%; padding-left: 30px; background-image: none !important; border-color: #C81589;">
+                                <option value="">السنة الأكادمية</option>
+                                @foreach (var year in Model.AcadimicYears)
+                                {
+                                    var isSelected = Model.SelectedAcademicYear == year.Text;
+                                    <option value="@year.Text" selected="@(isSelected ? "selected" : null)">@year.Text</option>
+                                }
+                            </select>
+                            <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                    </div>
+
+                </div>
+
+            </div>
+                <div class="rowspacing"></div>
+
+                <div class="row">
+                    <!-- Semester Dropdown -->
+                        <div class="col-xxl-3 col-xl-3 col-lg-3 mobiledropdown">
+                        <div style="position: relative;">
+                            <select name="SelectedSemester" onchange="submitFilterForm()"
+                                    class="form-select heading15" id="dropdown2"
+                                    style="width: 100%; padding-right: 30px; background-image: none !important; border-color: #C81589;">
+                                <option value="">الفصل</option>
+                                @foreach (var semester in Model.Semesters)
+                                {  
+                                    var isSelected = Model.SelectedSemester == int.Parse(semester.Value);
+                                    <option value="@semester.Value" selected="@(isSelected ? "selected" : null)">@semester.Text</option>
+                                }
+                            </select>
+                            <i class="fa-solid fa-caret-down"
+                               style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Country Dropdown -->
+                        <div class="col-xxl-3 col-xl-3 col-lg-3 mobiledropdown">
+                        <div style="position: relative;">
+                            <select name="SelectedCountryId" onchange="submitFilterForm()"
+                                    class="form-select heading15"
+                                    style="width: 100%; padding-right: 30px; background-image: none !important; border-color: #C81589;">
+                                <option value="">البلد</option>
+                                @foreach (var country in Model.Countries)
+                                {
+                                    var isSelected = Model.SelectedCountryId == int.Parse(country.Value);
+                                    <option value="@country.Value" selected="@(isSelected ? "selected" : null)">@country.Text</option>
+                                }
+                            </select>
+                            <i class="fa-solid fa-caret-down"
+                               style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        </div>
+                    </div>
+                    <!-- Nationality Dropdown -->
+
+                        <div class="col-xxl-3 col-xl-3 col-lg-3 mobiledropdown">
+                        <div style="position: relative;">
+                            <select name="SelectedNationalityId" onchange="submitFilterForm()"
+                                    class="form-select heading15"
+                                    style="width: 100%; padding-right: 30px; background-image: none !important; border-color: #C81589;">
+                                <option value="">الجنسية</option>
+                                @foreach (var nationality in Model.Nationalities)
+                                {
+                                    var isSelected = Model.SelectedNationalityId == int.Parse(nationality.Value);
+                                    <option value="@nationality.Value" selected="@(isSelected ? "selected" : null)">@nationality.Text</option>
+                                }
+                            </select>
+                            <i class="fa-solid fa-caret-down"
+                               style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                        </div>
+                    </div>
+                        <div class="col-xxl-3 col-xl-3 col-lg-3 mobiledropdown">
+        <div style="position: relative;">
+            <select name="SelectedStatusId" onchange="submitFilterForm()"
+                    class="form-select heading15"
+                    style="width: 100%; padding-right: 30px; background-image: none !important; border-color: #C81589;">
+                <option value="">الحالة</option>
+                @foreach (var st in Model.Statuses)
+                {
+                    var isSelected = Model.SelectedStatusId?.ToString() == st.Value;
+                    <option value="@st.Value" selected="@(isSelected ? "selected" : null)">@st.Text</option>
+                }
+            </select>
+            <i class="fa-solid fa-caret-down"
+                               style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+        </div>
+    </div>
+
+                </div>
+
+            </form>
+            <div class="partspacing"></div>
+
+            <table>
+
+                <thead class="table-light">
+                    <tr style="background: #ecebea">
+
+                        <th>اسم الطالب</th>
+                        <th>الكود</th>
+                        <th>التخصص</th>
+                        <th>رقم الهاتف</th>
+                        <th>البلد</th>
+                        <th>الموافقة من الطالب</th>
+
+                        <th>الحالة</th>
+                        <th>الشرط</th>
+                        <th>السبب</th>
+                      
+                        <th>الخصم المطلوب</th>
+                                                <th>وثيقة قبول مبدئي </th>
+                                                @if (!isAgent)
+                        {
+                            <th>طلب التحاق</th>
+}
+                        <th> </th>
+
+                    </tr>
+                </thead>
+
+
+                <tbody>
+                    @foreach (var student in Model.Students)
+                    {
+                        <tr>
+                            <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
+                            <td data-label="Code" class="readsub">@student.studentCode</td>
+                            <td data-label="Major" class="readsub">@student.Major_Name</td>
+                            <td data-label="Phone Number" class="readsub">@student.studentPhone</td>
+                            <td data-label="Country" class="readsub">@student.country</td>
+                            <td data-label="Approved By Student" class="readsub">@(student.approvedByStudent ? "نعم" : "لا")</td>
+                            <td data-label="Status" class="status-positive">@student.statusArabic</td>
+                            <td data-label="Condition" class="readsub">@student.approvalCondition</td>
+                            <td data-label="Reason" class="readsub">@student.rejectionReason</td>
+                            <td data-label="Required Discount" class="readsub">@student.requiredDiscount</td>
+                                                        <td data-label="Preliminary Acceptance" class="readsub">
+    @if (student.CanShowPreAcceptanceDoc)
+    {
+      <a asp-controller="AdminEn"
+   asp-action="PreliminaryAcceptanceDoc"
+   asp-route-studentId="@student.studentId"
+   target="_blank">
+    وثيقة قبول مبدئي
+</a>
+
+    }
+    else
+    {
+        <span style="opacity:.6;">—</span>
+    }
+</td>
+
+                          @if (!isAgent)
+                            {
+
+                                <td data-label="Enrollment Application" class="readsub">
+                                    <a href="@Url.Action("PrintRegularEnrollment", "AdminEn", new { studentId = student.studentId })"
+                                    target="_blank">
+                                        طلب التحاق
+                                    </a>
+                                </td>
+
+
+                            }
+
+<td data-label="" class="heading16 readsub">
+                               
+    
+    
+    <a href="@($"{pathPrefix}?studentId={student.studentId}")" target="_blank">المزيد...</a>
+
+@*                                 <a href="@($"{pathPrefix}{student.studentId}")" target="_blank">المزيد...</a>
+ *@@*                                 <a href="@Url.Action(actionName, controllerName, new { studentId = student.studentId })" target="_blank">المزيد...</a>
+ *@
+
+                            </td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination" style="justify-content: center; align-items: center;">
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("StudentList", new {
+                    page = i,
+ search = Model.SearchTerm,
+                    SelectedSemester = Model.SelectedSemester,
+                    selectedAcademicYear = Model.SelectedAcademicYear,
+                    SelectedCountryId = Model.SelectedCountryId,
+                    SelectedNationalityId = Model.SelectedNationalityId,
+                    SelectedStatusId = Model.SelectedStatusId
+
+                })">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+</main>
+<script>
+    let isDropdownChanged = false;
+
+    function submitFilterForm() {
+        isDropdownChanged = true;
+        document.getElementById("filterForm").submit();
+    }
+
+    document.getElementById("filterForm").addEventListener("submit", function (e) {
+        // تحقق إذا المستخدم اختار من دروب داون
+        if (!isDropdownChanged) {
+            // نعمل submit يدوي بدون ما نخليه يعتمد على دروب داون
+            e.preventDefault(); // نوقف السبميت الطبيعي
+            this.submit(); // ونعمل السبميت بعد التأكد
+        }
+
+        // أرجع القيمة الأصلية
+        isDropdownChanged = false;
+    });
+</script>

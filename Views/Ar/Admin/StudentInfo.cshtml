@@ -1,0 +1,261 @@
+﻿@model University_Agent_System.Models.ViewModel.StudentInfoViewModel
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+
+
+@functions {
+    public string GetUserType()
+    {
+        var jwt = Context.Request.Cookies["jwt"];
+        if (string.IsNullOrEmpty(jwt)) return null;
+
+        var handler = new JwtSecurityTokenHandler();
+        var token = handler.ReadJwtToken(jwt);
+        var typeClaim = token.Claims.FirstOrDefault(c => c.Type == "userType");
+        return typeClaim?.Value;
+    }
+}
+
+@{
+    string userType = GetUserType();
+}
+@{
+    Layout = "_LayoutAdminAr";
+
+}
+
+@{
+    bool isAccepted = Model.Status == "مقبول";
+    bool isRejected = Model.Status == "مرفوض";
+    bool isPinding = Model.Status == "	قيد التنفيذ" || string.IsNullOrEmpty(Model.Status);
+    bool hasCondition = Model.Status == "مقبول بشرط";
+    bool isSuperAdmin = User.IsInRole("Super Admin");
+    bool isAdmin = User.IsInRole("Admin");
+    bool isApproved = Model.studentApproval == 1;
+    // bool allowAction = isSuperAdmin || (isAdmin && isApproved);
+    bool allowAction = isSuperAdmin || isAdmin ;
+
+}
+<main>
+    <div class="container-fluid padding margin">
+
+        <div class="row">
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">معلومات الطالب</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+
+                <div class="row g-5">
+                    <div class="col-lg-3"></div>
+                    <div class="col-lg-6">
+                        <p class="read" style="position: relative; top: 25px; ">
+                            الحالة: <span style="color: #daa328;">@Model.isActive</span>
+                        </p>
+
+
+                        <div style="
+    display: flex;
+    justify-content: end;
+    gap: 10px;
+    padding-bottom: 10px;
+">
+
+                            @if (!isAccepted)
+                            {
+                                <a href="@Url.Action("EditStudent", "Ar", new { studentId = Model.studentId })" style="  color: #264C9F; z-index: 1; ">
+                                    <i class="fa-solid fa-pen-to-square"></i>تعديل</a>
+
+                           
+                            }
+                            @if (userType != "Admin") // 👈 hide link if user is Admin
+                            {
+                              
+                                <a href="@Url.Action("DeleteStudent", "AdminAr", new { id = Model.studentId })" style="color: #264C9F;  z-index: 1;">
+                                    <i class="fa-solid fa-trash"></i>حذف</a>
+
+
+                            }
+
+
+
+
+                        </div>
+
+
+
+
+
+                        <div class="cardcontainer">
+                            <div class="card card10" style="border-top: 4px solid #252486; ">
+                                @if (!string.IsNullOrEmpty(Model.studentPicture))
+                                {
+                                    <img src="@Url.Content($"~{Model.studentPicture}")"
+                                         alt="Student Image"
+                                         style="width:30%; height:auto;"
+                                         class="card-img-right" />
+                                }
+                                else
+                                {
+                                    <img src="../../../images/Artboard 2Human.jpg" style="   width:30%;height:auto;  " class="card-img-right" alt="WHED3">
+                                }
+                                <div class="card-body">
+                              
+                               
+
+                                    <div class="card-text">
+                                            <h2 class="heading14">@Model.studentNameArabic</h2>
+                                        <div>
+                                            <label class="read">الموافقة من الطالب:</label>
+                                                <label class="read">@Model.isApproved</label>
+                                        </div>
+                                        <div class="rowspacing"></div>
+                                        <div>
+                                            <label class="normal">الرقم الوطني:</label>
+                                                <label class="read" style="color: #daa328">@Model.nationalId</label>
+                                        </div>
+                                        <div>
+                                            <label class="normal">الجنسية:</label>
+                                                <label class="normal">@Model.Nationality</label>
+                                        </div>
+                                        <div>
+                                                <label class="normal">@Model.Country-@Model.city</label>
+
+                                        </div>
+                                        <div>
+                                            <label class="normal">رقم الهاتف:</label>
+                                                <label class="normal">@Model.studentPhone</label>
+                                        </div>
+                                        <div class="rowspacing"></div>
+                                        <div>
+                                                <label class="read">@Model.Degree -@Model.Faculty_Name </label>
+
+                                        </div>
+                                        <div>
+                                                <label class="read">@Model.Major_Name</label>
+
+                                        </div>
+                                        <div class="partspacing"></div>
+                                        <div>
+                                                <label class="read">@Model.Semester</label>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="Emailnphone">
+                            <div class="Email2">
+                                    <div style="" class="Emailtext2"><p>@Model.studentEmail</p></div>
+                            </div>
+                            <div class="phone2">
+                                    <div style="" class="phonetext2"><p>@Model.studentCode</p></div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-lg-3"></div>
+                </div>
+
+            </div>
+        </div>
+      
+        <div class="container-fluid padding margin">
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <div class="col-lg-8">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr style="background: #ecebea">
+                                    <th>اسم الملف</th>
+                                    <th>الملف</th>
+                                    <th>تاريخ التحميل</th>
+                                    <th>الفعل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Files != null && Model.Files.Any())
+                                {
+                                    foreach (var file in Model.Files)
+                                    {
+                                        <tr>
+                                            <td>@file.Title</td>
+                                            <td>@file.FileName</td>
+                                            <td>@file.UploadedDate</td>
+                                            <td><a href="@file.FileUrl" target="_blank">عرض...</a></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="4">No files uploaded.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+            </div>
+
+        <div class="row">
+            <div class="col-lg-4"></div>
+
+            <div class="col-lg-4">
+                <div class="btnwrap" style="min-width: 60%; display: flex; gap: 10px;">
+                    <form asp-controller="AdminAr" asp-action="UpdateStatus" method="post" style="width: 50%;">
+                            <input type="hidden" name="studentId" value="@Model.studentId" />
+                        <input type="hidden" name="newStatus" value="مقبول" />
+
+                            <textarea name="approvalCondition"
+                                      class="form-control mb-2"
+                                      placeholder="(شرط القبول (اختياري"></textarea>
+                    <!-- Approve Button -->
+                       @*  <button type="submit" class="mybtn heading15" style="background-color: #daa328; width: 100%; text-align: center; border: none;">
+                                @(isAccepted
+                                    ? (hasCondition ? "✔ مقبول بشرط" : "✔ مقبول")
+                                    : "قبول")
+                    </button> *@
+                        <button type="submit"
+                                class="mybtn heading15"
+                                style="background-color: #daa328; width: 100%; text-align: center; border: none;"
+                                @(allowAction ? "" : "disabled")>
+                            @(isAccepted
+                                                        ? (hasCondition ? "✔ مقبول بشرط" : "✔ مقبول")
+                                                        : "قبول")
+                        </button>
+                        </form>
+
+                    <form asp-controller="AdminAr" asp-action="UpdateStatus" method="post" style="width: 50%;">
+                        <input type="hidden" name="studentId" value="@Model.studentId" />
+                        <input type="hidden" name="newStatus" value="مرفوض" />
+
+                            <textarea name="rejectionReason"
+                                      class="form-control mb-2"
+                                      placeholder="سبب الرفض"
+                                      required></textarea>
+                    <!-- Reject Button -->
+                     @*    <button type="submit" class="mybtn heading15" style="background-color: #751851; width: 100%; text-align: center; border: none;">
+                                @(isRejected ? "✖ مرفوض" : "رفض")
+                    </button> *@
+                        <button type="submit" class="mybtn heading15" style="background-color: #751851; width: 100%; text-align: center; border: none;"
+@(allowAction ? "" : "disabled")>
+                            @(isRejected ? "✖ مرفوض" : "رفض")
+                        </button>
+                        </form>
+                </div>
+            </div>
+
+            <div class="col-lg-4"></div>
+        </div>
+    </div>
+
+
+
+
+   
+    <div class="partspacing"></div>
+</main>

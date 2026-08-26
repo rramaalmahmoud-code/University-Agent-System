@@ -1,0 +1,26 @@
+﻿@* @*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@{
+    ViewData["Title"] = "Approve Registration";
+}
+
+@if (Model.studentApproval == 1)
+{
+    <div class="alert alert-success">
+        ✅ You have already approved your registration. Thank you!
+    </div>
+}
+else
+{
+    <h2>Welcome @Model.studentNameEnglish</h2>
+    <p>Your agent has registered you at AAU University.</p>
+    <p>Click confirm to approve your registration.</p>
+
+    <form method="post" asp-action="ApproveStudent" asp-route-id="@Model.studentId">
+        <button type="submit" class="btn btn-success">✅ Confirm Approval</button>
+    </form>
+}

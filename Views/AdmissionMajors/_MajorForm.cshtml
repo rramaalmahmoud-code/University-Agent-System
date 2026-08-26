@@ -1,0 +1,238 @@
+﻿@model University_Agent_System.Models.ViewModel.AdmissionMajorFormViewModel
+
+<div asp-validation-summary="ModelOnly">
+</div>
+
+<input asp-for="AdmissionMajorId"
+       type="hidden" />
+
+<input asp-for="OracleMajorNo"
+       type="hidden" />
+
+<input asp-for="IsLocalOnly"
+       type="hidden" />
+
+<input asp-for="SemesterId"
+       type="hidden" />
+
+@if (Model.OracleMajorNo.HasValue)
+{
+    <div class="normal">
+        رقم التخصص في Oracle:
+        <strong>@Model.OracleMajorNo</strong>
+
+        <br />
+
+        أي تعديل على الاسم سيُحفظ كتعديل محلي داخل
+        نظام الوكلاء.
+    </div>
+}
+else
+{
+    <div class="normal">
+        هذا تخصص محلي مؤقت إلى أن تتم إضافته رسميًا
+        من مركز الحاسوب.
+    </div>
+}
+
+<div class="partspacing"></div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <label asp-for="MajorNameAr"
+               class="control-label heading17">
+        </label>
+
+        <input asp-for="MajorNameAr"
+               class="form-control text"
+               dir="rtl" />
+
+        <span asp-validation-for="MajorNameAr"
+              class="field-validation-error">
+        </span>
+
+        @if (!Model.IsLocalOnly &&
+                !string.IsNullOrWhiteSpace(
+                Model.SourceMajorNameAr))
+        {
+            <div class="normal labelspacing">
+                الاسم الرسمي:
+                @Model.SourceMajorNameAr
+            </div>
+        }
+
+    </div>
+
+    <div class="col-md-6">
+
+        <label asp-for="MajorNameEn"
+               class="control-label heading17">
+        </label>
+
+        <input asp-for="MajorNameEn"
+               class="form-control text"
+               dir="ltr" />
+
+        <span asp-validation-for="MajorNameEn"
+              class="field-validation-error">
+        </span>
+
+        @if (!Model.IsLocalOnly &&
+                !string.IsNullOrWhiteSpace(
+                Model.SourceMajorNameEn))
+        {
+            <div class="normal labelspacing">
+                Official name:
+                @Model.SourceMajorNameEn
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<div class="rowspacing"></div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <label asp-for="DegreeCode"
+               class="control-label heading17">
+        </label>
+
+        @if (Model.IsLocalOnly ||
+                !Model.OracleMajorNo.HasValue)
+        {
+            <select asp-for="DegreeCode"
+                    asp-items="ViewBag.Degrees"
+                    class="form-select">
+
+                <option value="">
+                    اختر الدرجة العلمية
+                </option>
+
+            </select>
+        }
+        else
+        {
+            <select asp-for="DegreeCode"
+                    asp-items="ViewBag.Degrees"
+                    class="form-select"
+                    disabled>
+            </select>
+
+            <input type="hidden"
+                   name="DegreeCode"
+                   value="@Model.DegreeCode" />
+        }
+
+        <span asp-validation-for="DegreeCode"
+              class="field-validation-error">
+        </span>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <label asp-for="FacultyNo"
+               class="control-label heading17">
+        </label>
+
+        @if (Model.IsLocalOnly ||
+                !Model.OracleMajorNo.HasValue)
+        {
+            <select asp-for="FacultyNo"
+                    asp-items="ViewBag.Faculties"
+                    class="form-select">
+
+                <option value="">
+                    اختر الكلية
+                </option>
+
+            </select>
+        }
+        else
+        {
+            <select asp-for="FacultyNo"
+                    asp-items="ViewBag.Faculties"
+                    class="form-select"
+                    disabled>
+            </select>
+
+            <input type="hidden"
+                   name="FacultyNo"
+                   value="@Model.FacultyNo" />
+        }
+
+        <span asp-validation-for="FacultyNo"
+              class="field-validation-error">
+        </span>
+
+    </div>
+
+</div>
+
+<div class="rowspacing"></div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <label asp-for="SemesterId"
+               class="control-label heading17">
+        </label>
+
+        <input asp-for="SemesterId"
+               class="form-control text"
+               readonly />
+
+        <span asp-validation-for="SemesterId"
+              class="field-validation-error">
+        </span>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <label asp-for="DiscountPercentage"
+               class="control-label heading17">
+        </label>
+
+        <div class="input-group">
+
+            <input asp-for="DiscountPercentage"
+                   type="number"
+                   min="0"
+                   max="100"
+                   step="0.01"
+                   class="form-control text" />
+
+            <span class="input-group-text">
+                %
+            </span>
+
+        </div>
+
+        <span asp-validation-for="DiscountPercentage"
+              class="field-validation-error">
+        </span>
+
+    </div>
+
+</div>
+
+<div class="partspacing"></div>
+
+<div class="form-check">
+
+    <input asp-for="IsEnabledForAdmission"
+           class="form-check-input" />
+
+    <label asp-for="IsEnabledForAdmission"
+           class="form-check-label heading17">
+    </label>
+
+</div>

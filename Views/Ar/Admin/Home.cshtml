@@ -1,0 +1,419 @@
+﻿@model University_Agent_System.Models.ViewModel.StudentListViewModel
+@{
+    Layout = "_LayoutAdminAr";
+    int totalPages = (int)Math.Ceiling((double)Model.PendingTotalCount / Model.PageSize);
+
+}
+<main>
+    <div class="container-fluid padding margin">
+
+        <div class="row">
+
+            <div class="col-lg-12">
+                <section id="title-wrapper" style="justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">الرئيسية</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328;"></div>
+                </section>
+
+
+
+            </div>
+
+        </div>
+
+    </div>
+@*      <form method="get" asp-action="Home">
+    
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="partspacing"></div>
+
+        <div class="row">
+
+
+            <div class="col-lg-2"></div>
+
+            <div class="col-lg-8">
+
+
+                <!-- Flex container لتقريب العناصر بجانب بعض -->
+                <div class="d-flex">
+                    <!-- agent/DropDownList -->
+                    <div class="col-xxl-9 col-xl-9 col-lg-9 p-0" style=" min-width: 70%;">
+                            <input type="text" name="search" value="@Model.SearchTerm" class="form-control" id="studentName" placeholder="بحث بالاسم أو الرقم" style="border-color: #C81589; border-radius: 0rem !important; padding: 0.355rem .75rem;">
+                    </div>
+
+                    <div class="col-xxl-3 col-xl-3 col-lg-3 p-0">
+                        <!-- button search -->
+                        <div class="btnwrap">
+                                <button type="submit" target="_blank" class="mybtn heading15" style="width: 100%; background: #c81589; border-radius: 0rem !important; padding-left: 0px; padding-right: 0px;border: none;">
+                                بحث <i class="fas fa-search"></i>
+                                <span class="line" style="border-left: 6px solid #252468; border-bottom: 6px solid #252468;"></span>
+                                <span class="areaborder" style="border: 0px;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="col-lg-2"></div>
+
+            <div class="partspacing"></div>
+
+            <div class="        " style="background-size: 100% !important;-webkit-background-size: cover !important;-moz-background-size: cover !important;-o-background-size: cover !important;background-size: cover !important;background-position: center !important;">
+
+                <div class="row">
+                    <div class="row">
+                        <div class="col-lg-2"></div>
+                        <div class="col-lg-8">
+                            <div class="countersection ">
+                                <h2 class="countertitle">
+                                    <p>
+                                        <span class="heading8">
+                                            إجمالي عدد الطلاب للوكيل:
+                                        </span>
+                                    </p>
+                                </h2>
+                                <span class="countercorner" style="  "></span>
+                                <div class="counterposition">
+                                    <div class="counterarea heading5" style="background-color: #264C9F; ">
+                                            <span style="color:inherit;" data-toggle="counterUp">@Model.TotalStudents</span><span></span>
+                                        <span class="counterareacorner" style="  "></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-lg-2"></div>
+                    </div>
+
+                    <div class="col-lg-12">
+
+                        <table style="background-color: #fff;">
+
+                            <thead class="table-light">
+                                <tr style="background: #ecebea">
+
+                                    <th>اسم الطالب</th>
+                                    <th>الكود</th>
+                                    <th>التخصص</th>
+                                    <th>اسم الوكيل</th>
+                                    <th>الموافقة من الطالب</th>
+
+                                    <th>الحالة</th>
+                                    <th> </th>
+
+                                </tr>
+                            </thead>
+
+
+                                <tbody>
+
+
+                                    @foreach (var student in Model.Students)
+                                    {
+                                        <tr>
+                                            <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
+                                            <td data-label="Code" class="readsub">@student.studentCode</td>
+                                            <td data-label="Major" class="readsub">@student.Major_Name</td>
+                                            <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
+                                            <td data-label="Approved By Student" class="readsub">@(student.approvedByStudent ? "نعم" : "لا")</td>
+                                            <td data-label="Status" class="status-positive">@student.statusArabic</td>
+                                            <td data-label="" class="heading16 readsub">
+                                                <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
+                                            
+
+
+                                            </td>
+                                        </tr>
+                                    }
+
+
+                                </tbody>
+                            </table>
+
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="col-lg-4"></div>
+                    <div class="col-lg-4">
+                        <div class="btnwrap" style=" min-width: 60%;">
+                                <a href="@Url.Action("Filter", "AdminAr", new { agentId = Model.agentId, agentName = Model.agentName })" target="_blank" class="mybtn heading15" style=" background-color: #daa328; width: 90% ">
+                                تصفية المزيد
+
+                            </a>
+                        </div>
+
+                    </div>
+                    <div class="col-lg-4"></div>
+                </div>
+
+            </div>
+        </div>
+        <div class="partspacing"></div>
+    </div>
+    </form>
+ *@   
+ <form method="get" asp-action="Home" id="homeForm">
+
+        <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+            <div class="partspacing"></div>
+
+            <div class="row">
+
+                <div class="col-lg-2"></div>
+
+                <div class="col-lg-8">
+
+                    <!-- Flex container -->
+                    <div class="d-flex gap-2" style="align-items:flex-start;">
+
+                        <!-- ✅ Agent Search Dropdown (keeps name="search") -->
+                        <div class="col-xxl-9 col-xl-9 col-lg-9 p-0 position-relative" style="min-width:70%;">
+                            <input type="search"
+                                   name="search"
+                                   value="@Model.SearchTerm"
+                                   class="form-control"
+                                   id="agentSearchHome"
+                                   placeholder="ابحث واختر الوكيل..."
+                                   autocomplete="off"
+                                   onkeyup="filterAgentHome()"
+                                   style="border-color:#C81589; border-radius:0rem !important; padding:0.355rem .75rem;" />
+
+                            <!-- Dropdown Options -->
+                            <ul id="agentOptionsHome"
+                                class="list-group mt-2"
+                                style="display:none; position:absolute; z-index:9999; width:100%; max-height:260px; overflow:auto;">
+                                @foreach (var agent in Model.Agents)
+                                {
+                                    <li class="list-group-item agent-item-home"
+                                        data-name="@agent.agentNameArabic"
+                                        style="cursor:pointer;">
+                                        @agent.agentNameArabic
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+
+                        <!-- button search (optional لأن الاختيار يعمل submit تلقائي، لكن نخليه) -->
+                        <div class="col-xxl-3 col-xl-3 col-lg-3 p-0">
+                            <div class="btnwrap">
+                                <button type="submit"
+                                        class="mybtn heading15"
+                                        style="width:100%; background:#c81589; border-radius:0rem !important; padding-left:0; padding-right:0; border:none;">
+                                    بحث <i class="fas fa-search"></i>
+                                    <span class="line" style="border-left:6px solid #252468; border-bottom:6px solid #252468;"></span>
+                                    <span class="areaborder" style="border:0px;"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="col-lg-2"></div>
+
+                <div class="partspacing"></div>
+
+                <div class="" style="background-size:100% !important;-webkit-background-size:cover !important;-moz-background-size:cover !important;-o-background-size:cover !important;background-size:cover !important;background-position:center !important;">
+
+                    <div class="row">
+                        <div class="row">
+                            <div class="col-lg-2"></div>
+                            <div class="col-lg-8">
+                                <div class="countersection ">
+                                    <h2 class="countertitle">
+                                        <p>
+                                            <span class="heading8">
+                                                إجمالي عدد الطلاب للوكيل:
+                                            </span>
+                                        </p>
+                                    </h2>
+                                    <span class="countercorner"></span>
+                                    <div class="counterposition">
+                                        <div class="counterarea heading5" style="background-color:#264C9F;">
+                                            <span style="color:inherit;" data-toggle="counterUp">@Model.TotalStudents</span><span></span>
+                                            <span class="counterareacorner"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-lg-2"></div>
+                        </div>
+
+                        <div class="col-lg-12">
+
+                            <table style="background-color:#fff;">
+
+                                <thead class="table-light">
+                                    <tr style="background:#ecebea">
+                                        <th>اسم الطالب</th>
+                                        <th>الكود</th>
+                                        <th>التخصص</th>
+                                        <th>اسم الوكيل</th>
+                                        <th>الموافقة من الطالب</th>
+                                        <th>الحالة</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var student in Model.Students)
+                                    {
+                                        <tr>
+                                            <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
+                                            <td data-label="Code" class="readsub">@student.studentCode</td>
+                                            <td data-label="Major" class="readsub">@student.Major_Name</td>
+                                            <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
+                                            <td data-label="Approved By Student" class="readsub">@(student.approvedByStudent ? "نعم" : "لا")</td>
+                                            <td data-label="Status" class="status-positive">@student.statusArabic</td>
+                                            <td data-label="" class="heading16 readsub">
+                                                <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-4"></div>
+                        <div class="col-lg-4">
+                            <div class="btnwrap" style="min-width:60%;">
+                                <a href="@Url.Action("Filter", "AdminAr", new { agentId = Model.agentId, agentName = Model.agentName })"
+                                   target="_blank"
+                                   class="mybtn heading15"
+                                   style="background-color:#daa328; width:90%;">
+                                    تصفية المزيد
+                                </a>
+                            </div>
+
+                        </div>
+                        <div class="col-lg-4"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="partspacing"></div>
+        </div>
+
+
+        <!-- ✅ JavaScript for agent search dropdown -->
+
+    </form>
+
+ <div class="container-fluid padding margin">
+        <div class="row">
+
+            <div class="col-lg-12">
+                <h2 class="heading14">الطلبات قيد التنفيذ</h2>
+                <table style="background-color: #fff;">
+
+                    <thead class="table-light">
+                        <tr style="background: #ecebea">
+
+                            <th>اسم الطالب</th>
+                            <th>الكود</th>
+                            <th>التخصص</th>
+                            <th>اسم الوكيل</th>
+                            <th>الحالة</th>
+                            <th> </th>
+
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var student in Model.PendingStudents)
+                        {
+                            <tr>
+
+                                <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
+                                <td data-label="Code" class="readsub">@student.studentCode</td>
+                                <td data-label="Major" class="readsub">@student.Major_Name</td>
+                                <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
+                                <td data-label="Status" class="status-positive">@student.statusArabic</td>
+
+
+                                <td data-label="" class="heading16 readsub">
+
+                                    <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
+
+                                </td>
+                            </tr>
+                        }
+
+
+
+                    </tbody>
+                </table>
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination" style="justify-content: center; align-items: center;">
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Home", new { page = i, search = Model.SearchTerm })">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+
+            </div>
+
+        </div>
+    </div>
+</main>
+<script>
+    function filterAgentHome() {
+        var input = document.getElementById('agentSearchHome');
+        var filter = (input.value || "").toUpperCase();
+        var list = document.getElementById('agentOptionsHome');
+        var items = list.getElementsByTagName('li');
+
+        list.style.display = input.value.trim().length > 0 ? "block" : "none";
+
+        for (var i = 0; i < items.length; i++) {
+            var txtValue = items[i].textContent || items[i].innerText;
+            items[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var list = document.getElementById('agentOptionsHome');
+        var input = document.getElementById('agentSearchHome');
+        var form = document.getElementById('homeForm');
+
+        // click select
+        list.addEventListener('click', function (e) {
+            if (e.target && e.target.matches('.agent-item-home')) {
+                var agentName = e.target.getAttribute('data-name') || e.target.innerText;
+
+                // ✅ keep your old backend logic (search by agent name)
+                input.value = agentName;
+
+                list.style.display = "none";
+
+                // ✅ auto submit to load students
+                form.submit();
+            }
+        });
+
+        // hide dropdown if click outside
+        document.addEventListener('click', function (e) {
+            var isInside = input.contains(e.target) || list.contains(e.target);
+            if (!isInside) list.style.display = "none";
+        });
+    });
+</script>

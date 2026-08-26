@@ -1,0 +1,681 @@
+﻿@model List<University_Agent_System.Models.ViewModel.AdmissionMajorAdminViewModel>
+
+@{
+    Layout = "_LayoutAdminAr";
+
+    ViewData["Title"] =
+        "إدارة التخصصات والخصومات";
+
+    int selectedSemester =
+        ViewBag.SelectedSemester != null
+            ? Convert.ToInt32(
+                ViewBag.SelectedSemester
+            )
+            : 20261;
+
+    int totalCount = Model.Count;
+
+    int activeCount = Model.Count(
+        x => x.IsEnabledForAdmission
+    );
+
+    int inactiveCount = Model.Count(
+        x => !x.IsEnabledForAdmission
+    );
+
+    int localCount = Model.Count(
+        x => x.IsLocalOnly
+    );
+
+    int missingCount = Model.Count(
+        x => !x.ExistsInOracle &&
+             !x.IsLocalOnly
+    );
+
+    int discountsCount = Model.Count(
+        x => x.DiscountPercentage > 0
+    );
+}
+
+<div class="container-fluid padding"
+     dir="rtl">
+
+    <div class="row">
+
+        <div class="col-md-7">
+
+            <div class="heading9">
+                إدارة التخصصات والخصومات
+            </div>
+
+            <div class="normal">
+                إدارة التخصصات الرسمية والمحلية
+                ونسب الخصومات الخاصة بالفصل الدراسي
+                @selectedSemester
+            </div>
+
+        </div>
+
+        <div class="col-md-5 flexendcol">
+
+            <div class="buttonsgroup pre">
+
+                <div class="btnwrap">
+
+                    <a asp-controller="AdmissionMajors"
+                       asp-action="Create"
+                       asp-route-semesterId="@selectedSemester"
+                       class="btn">
+
+                        إضافة تخصص جديد
+                    </a>
+
+                </div>
+
+                <div class="btnwrap">
+
+                    <form asp-controller="AdmissionMajors"
+                          asp-action="Sync"
+                          method="post"
+                          onsubmit="return confirm('هل تريد تحديث التخصصات من مركز الحاسوب؟');">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               name="semesterId"
+                               value="@selectedSemester" />
+
+                        <button type="submit"
+                                class="btn">
+
+                            تحديث من مركز الحاسوب
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="partspacing"></div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="status-positive">
+            @TempData["SuccessMessage"]
+        </div>
+
+        <div class="rowspacing"></div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="status-negative">
+            @TempData["ErrorMessage"]
+        </div>
+
+        <div class="rowspacing"></div>
+    }
+
+    <div class="pre">
+
+        <form asp-controller="AdmissionMajors"
+              asp-action="Index"
+              method="get">
+
+            <div class="row">
+
+                <div class="col-lg-3 col-md-6">
+
+                    <label class="heading17">
+                        الفصل الدراسي
+                    </label>
+
+                    <input type="number"
+                           name="semesterId"
+                           value="@selectedSemester"
+                           class="form-control text"
+                           required />
+
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+
+                    <label class="heading17">
+                        البحث
+                    </label>
+
+                    <input type="text"
+                           id="majorSearch"
+                           class="form-control text"
+                           placeholder="ابحث باسم أو رقم التخصص أو الكلية أو القسم" />
+
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+
+                    <label class="heading17">
+                        حالة القبول
+                    </label>
+
+                    <select id="statusFilter"
+                            class="form-select">
+
+                        <option value="">
+                            جميع الحالات
+                        </option>
+
+                        <option value="true">
+                            متاح
+                        </option>
+
+                        <option value="false">
+                            غير متاح
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+
+                    <label class="heading17">
+                        مصدر التخصص
+                    </label>
+
+                    <select id="sourceFilter"
+                            class="form-select">
+
+                        <option value="">
+                            جميع المصادر
+                        </option>
+
+                        <option value="oracle">
+                            مركز الحاسوب
+                        </option>
+
+                        <option value="local">
+                            تخصص محلي
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-lg-1 col-md-12">
+
+                    <button type="submit"
+                            class="btn">
+
+                        عرض
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <div class="partspacing"></div>
+
+    <div class="normal">
+
+        إجمالي التخصصات:
+        <strong>@totalCount</strong>
+
+        &nbsp; | &nbsp;
+
+        المتاحة:
+        <strong class="status-positive">
+            @activeCount
+        </strong>
+
+        &nbsp; | &nbsp;
+
+        غير المتاحة:
+        <strong class="status-negative">
+            @inactiveCount
+        </strong>
+
+        &nbsp; | &nbsp;
+
+        التخصصات المحلية:
+        <strong>@localCount</strong>
+
+        &nbsp; | &nbsp;
+
+        تخصصات لها خصم:
+        <strong>@discountsCount</strong>
+
+        @if (missingCount > 0)
+        {
+            <text>
+                &nbsp; | &nbsp;
+
+                غير الموجودة في Oracle:
+
+                <strong class="status-negative">
+                    @missingCount
+                </strong>
+            </text>
+        }
+
+    </div>
+
+    <div class="partspacing"></div>
+
+    <div class="table-responsive">
+
+        <table id="majorsTable">
+
+            <thead>
+
+                <tr>
+                    <th>الرقم</th>
+                    <th>التخصص</th>
+                    <th>الكلية</th>
+                    <th>الدرجة</th>
+                    <th>الخصم</th>
+                    <th>المصدر</th>
+                    <th>حالة Oracle</th>
+                    <th>حالة القبول</th>
+                    <th>الإجراءات</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @foreach (var item in Model)
+                {
+                    string source =
+                    item.IsLocalOnly
+                    ? "local"
+                    : "oracle";
+
+                    string enabled =
+                    item.IsEnabledForAdmission
+                    ? "true"
+                    : "false";
+
+                    <tr data-source="@source"
+                        data-enabled="@enabled">
+
+                        <td data-label="الرقم">
+
+                            @if (item.OracleMajorNo.HasValue)
+                            {
+                                <strong>
+                                    @item.OracleMajorNo
+                                </strong>
+                            }
+                            else
+                            {
+                                <span class="status-positive">
+                                    محلي
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="التخصص">
+
+                            <strong>
+                                @item.MajorNameAr
+                            </strong>
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                                    item.MajorNameEn))
+                            {
+                                <br />
+
+                                <span class="normal">
+                                    @item.MajorNameEn
+                                </span>
+                            }
+
+                            @if (!item.IsLocalOnly &&
+                                                    !string.IsNullOrWhiteSpace(
+                                                    item.SourceMajorNameAr) &&
+                                                    !string.Equals(
+                                                    item.MajorNameAr,
+                                                    item.SourceMajorNameAr,
+                                                    StringComparison.Ordinal))
+                            {
+                                <br />
+
+                                <span class="status-negative">
+                                    الاسم الرسمي:
+                                    @item.SourceMajorNameAr
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="الكلية">
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                                    item.FacultyNameAr))
+                            {
+                                <strong>
+                                    @item.FacultyNameAr
+                                </strong>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                                        item.FacultyNameEn))
+                                {
+                                    <br />
+
+                                    <span class="normal">
+                                        @item.FacultyNameEn
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="status-negative">
+                                    اسم الكلية غير متوفر
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="الدرجة">
+
+                            @if (item.DegreeCode.HasValue)
+                            {
+                                @item.DegreeCode
+                            }
+                            else
+                            {
+                                <span class="normal">
+                                    غير محددة
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="الخصم">
+
+                            @if (item.DiscountPercentage > 0)
+                            {
+                                <strong class="status-positive">
+                                    @item.DiscountPercentage.ToString("0.##")%
+                                </strong>
+                            }
+                            else
+                            {
+                                <span class="normal">
+                                    بدون خصم
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="المصدر">
+
+                            @if (item.IsLocalOnly)
+                            {
+                                <span class="status-positive">
+                                    تخصص محلي
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    مركز الحاسوب
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="حالة Oracle">
+
+                            @if (item.IsLocalOnly)
+                            {
+                                <span class="normal">
+                                    لا ينطبق
+                                </span>
+                            }
+                            else if (item.ExistsInOracle)
+                            {
+                                <span class="status-positive">
+                                    موجود
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-negative">
+                                    غير موجود
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="حالة القبول">
+
+                            @if (item.IsEnabledForAdmission)
+                            {
+                                <span class="status-positive">
+                                    متاح
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-negative">
+                                    غير متاح
+                                </span>
+                            }
+
+                        </td>
+
+                        <td data-label="الإجراءات">
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                <a asp-controller="AdmissionMajors"
+                                   asp-action="Edit"
+                                   asp-route-id="@item.AdmissionMajorId"
+                                   asp-route-semesterId="@selectedSemester"
+                                   class="btn btn-sm btn-outline-primary">
+
+                                    تعديل
+                                </a>
+
+                                @if (item.IsEnabledForAdmission)
+                                {
+                                    <form asp-controller="AdmissionMajors"
+                                          asp-action="Delete"
+                                          method="post"
+                                          onsubmit="return confirm('هل تريد حذف التخصص من قائمة القبول؟');">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.AdmissionMajorId" />
+
+                                        <input type="hidden"
+                                               name="semesterId"
+                                               value="@selectedSemester" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger">
+
+                                            حذف
+                                        </button>
+
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-controller="AdmissionMajors"
+                                          asp-action="Restore"
+                                          method="post"
+                                          onsubmit="return confirm('هل تريد استعادة التخصص لقائمة القبول؟');">
+
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="id"
+                                               value="@item.AdmissionMajorId" />
+
+                                        <input type="hidden"
+                                               name="semesterId"
+                                               value="@selectedSemester" />
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-success">
+
+                                            استعادة
+                                        </button>
+
+                                    </form>
+                                }
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div id="noResultsMessage"
+         class="normal"
+         style="display:none;">
+
+        لا توجد تخصصات مطابقة لخيارات البحث.
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script>
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                const searchInput =
+                    document.getElementById(
+                        "majorSearch"
+                    );
+
+                const statusFilter =
+                    document.getElementById(
+                        "statusFilter"
+                    );
+
+                const sourceFilter =
+                    document.getElementById(
+                        "sourceFilter"
+                    );
+
+                const rows =
+                    document.querySelectorAll(
+                        "#majorsTable tbody tr"
+                    );
+
+                const noResultsMessage =
+                    document.getElementById(
+                        "noResultsMessage"
+                    );
+
+                function filterMajors() {
+
+                    const searchValue =
+                        searchInput.value
+                            .trim()
+                            .toLowerCase();
+
+                    const selectedStatus =
+                        statusFilter.value;
+
+                    const selectedSource =
+                        sourceFilter.value;
+
+                    let visibleCount = 0;
+
+                    rows.forEach(function (row) {
+
+                        const rowText =
+                            row.innerText
+                                .toLowerCase();
+
+                        const rowStatus =
+                            row.getAttribute(
+                                "data-enabled"
+                            );
+
+                        const rowSource =
+                            row.getAttribute(
+                                "data-source"
+                            );
+
+                        const matchesSearch =
+                            searchValue === "" ||
+                            rowText.includes(
+                                searchValue
+                            );
+
+                        const matchesStatus =
+                            selectedStatus === "" ||
+                            rowStatus ===
+                            selectedStatus;
+
+                        const matchesSource =
+                            selectedSource === "" ||
+                            rowSource ===
+                            selectedSource;
+
+                        const shouldShow =
+                            matchesSearch &&
+                            matchesStatus &&
+                            matchesSource;
+
+                        row.style.display =
+                            shouldShow ? "" : "none";
+
+                        if (shouldShow)
+                        {
+                            visibleCount++;
+                        }
+                    });
+
+                    noResultsMessage.style.display =
+                        visibleCount === 0
+                            ? "block"
+                            : "none";
+                }
+
+                searchInput.addEventListener(
+                    "input",
+                    filterMajors
+                );
+
+                statusFilter.addEventListener(
+                    "change",
+                    filterMajors
+                );
+
+                sourceFilter.addEventListener(
+                    "change",
+                    filterMajors
+                );
+            }
+        );
+    </script>
+}

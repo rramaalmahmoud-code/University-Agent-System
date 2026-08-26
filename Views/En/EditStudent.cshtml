@@ -1,0 +1,1914 @@
+﻿@using University_Agent_System.Models
+@using University_Agent_System.Models.ViewModel
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@model StudentViewModel
+
+@functions {
+    public string GetUserType()
+    {
+        var jwt = Context.Request.Cookies["jwt"];
+        if (string.IsNullOrEmpty(jwt)) return null;
+
+        var handler = new JwtSecurityTokenHandler();
+        var token = handler.ReadJwtToken(jwt);
+        var typeClaim = token.Claims.FirstOrDefault(c => c.Type == "userType");
+        return typeClaim?.Value;
+    }
+}
+
+@{
+    string userType = GetUserType();
+    Layout = (userType == "Super Admin" || userType == "Admin") ? "_LayoutAdmin" : "_Layout";
+
+    string pathPrefix = userType == "Agent" ? "/En/StudentInfo/" : "/En/Admin/StudentInfo/";
+    var nationalities = (List<University_Agent_System.Models.nationality>)Model.Nationalities;
+    var countries = (List<University_Agent_System.Models.country>)Model.Countries;
+    var agents = (List<University_Agent_System.Models.agent>)Model.Agents;
+    var selectedNationality = nationalities?.FirstOrDefault(n => n.nationalityId == Model.nationalityId)?.nationalityEnglish;
+    var selectedCountry = countries?.FirstOrDefault(c => c.countryId == Model.countryId)?.countryEnglish;
+    var selectedCountry0 = countries?.FirstOrDefault(c => c.countryId == Model.countryId0)?.countryEnglish;
+    var selectedCountry1 = countries?.FirstOrDefault(c => c.countryId == Model.countryId1)?.countryEnglish;
+    var selectedCountry2 = countries?.FirstOrDefault(c => c.countryId == Model.countryId2)?.countryEnglish;
+    var selectedCountry3 = countries?.FirstOrDefault(c => c.countryId == Model.countryId3)?.countryEnglish;
+    var faculties = Model.Faculties as List<University_Agent_System.Models.Oracle.FacultyWithProgramsViewModel>;
+    var selectedAgent = agents?.FirstOrDefault(a => a.agentId == Model.agentId)?.agentNameEnglish;
+    // string maleSelected = Model.studentGender == 1 ? "selected" : "";
+    // string femaleSelected = Model.studentGender == 0 ? "selected" : "";
+}
+@{
+    var selectedGender = Model.studentGender;
+}
+@if (ViewBag.SuccessMessage != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @ViewBag.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+
+<main>
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="row">
+            <!---------------EDIT STUDENT---------------->
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">EDIT STUDENT</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h2 class="heading14">Student Information</h2>
+                    </div>
+                </div>
+
+            </div>
+            <form asp-controller="En" asp-action="EditStudent" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="studentId" value="@Model.studentId" />
+                <div class="partspacing"></div>
+
+                <!-- Student Basic Info -->
+                <div class="card mb-4">
+                    <div class="card-header heading16">Basic Student Information</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="discount" class="form-label heading16 labelspacing">University Number</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="discount" class="form-label heading16 labelspacing">Password</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control" id="Password" name="Password" value="@Model.Password" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="profilePicture" class="form-label heading16 labelspacing">Personal Photo:</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="profilePicture" name="studentPicture" accept="image/*">
+                                        <input type="hidden" name="studentPicturePath" value="@Model.studentPicturePath" />
+
+
+                                        @if (!string.IsNullOrEmpty(Model.studentPicturePath))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentPicturePath" target="_blank">View Uploaded Picture</a>
+                                                <br />
+                                                <img src="@Model.studentPicturePath" alt="Uploaded Picture" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="rowspacing"></div>
+
+                        <!-- Label -->
+                        <div class="row">
+
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="dropdownDegree" class="form-label heading16 labelspacing" id="degree_L">
+                                            Academic Degree:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Academic Degree / Dropdown -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <div style="position: relative;  width: 100%;">
+                                            <input type="hidden" asp-for="degreeId" id="selectedDegreeId" name="degreeId" value="@Model.degreeId" />
+
+                                            <select class="form-select heading15" id="dropdownDegree" name="degreeId" style="width: 100%; padding-left: 30px; background-image:none !important" data-selected="@Model.degreeId">
+                                                <option value="0"></option>
+                                                @foreach (var degree in Model.Degrees)
+                                                {
+                                                    var selected = Model.degreeId == degree.degreeId ? "selected" : "";
+                                                    @Html.Raw($"<option value='{degree.degreeId}' {selected}>{degree.degreeEnglish}</option>")
+                                                }
+                                            </select>
+                                            <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                        </div>
+                                        <span asp-validation-for="degreeId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Faculty / Label -->
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="dropdownFaculty" class="form-label heading16 labelspacing" id="Nationality_L">
+                                            Faculty:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <!-- Faculty / Dropdown -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <div style="position: relative;  width: 100%;">
+                                            <input type="hidden" asp-for="Faculty_no" id="selectedFacultyId" value="@Model.Faculty_no" name="Faculty_no">
+
+                                            <select class="form-select heading15" id="dropdownFaculty" data-selected="@Model.Faculty_no" style="width: 100%; padding-left: 30px; background-image:none !important">
+                                                <option value="0"></option>
+                                                @if (faculties != null)
+                                                {
+                                                    foreach (var faculty in faculties)
+                                                    {
+                                                        var selected = Model.Faculty_no == faculty.Faculty_no ? "selected" : "";
+                                                        @Html.Raw($"<option value='{faculty.Faculty_no}' {selected}>{faculty.Faculty_Name_S}</option>")
+                                                    }
+                                                }
+                                            </select>
+                                            <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                        </div>
+                                        <span asp-validation-for="Faculty_no" class="text-danger"></span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rowspacing"></div>
+                        <div class="row">
+                            <!-- Upload Bachelor Certificate -->
+                            <div class="col-lg-6" id="bachelorCertDiv">
+                                <label for="bachelorDegree" class="form-label heading16 labelspacing">Bachelor’s Certificate:<span style="color:red">*</span></label>
+                                <input type="file" class="form-control" id="bachelorDegree" name="studentBachelor_Certification" accept=".pdf, .jpg, .png">
+                                <input type="hidden" name="studentBachelor_CertificationPath" value="@Model.studentBachelor_CertificationPath" />
+                                <span asp-validation-for="studentBachelor_Certification" class="text-danger"></span>
+
+                                @if (!string.IsNullOrEmpty(Model.studentBachelor_CertificationPath))
+                                {
+                                    <div class="mt-2">
+                                        <a href="@Model.studentBachelor_CertificationPath" target="_blank">View Uploaded Certificate</a>
+                                        <br />
+                                        <img src="@Model.studentBachelor_CertificationPath" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                    </div>
+                                }
+                            </div>
+
+                            @*                             <div class="col-lg-6" id="bachelorCertDiv">
+                                <label for="bachelorDegree" class="form-label heading16 labelspacing">Bachelor’s Certificate:<span style="color:red">*</span></label>
+                                <input type="file" class="form-control" id="bachelorDegree" name="studentBachelor_Certification" accept=".pdf, .jpg, .png" required>
+                                <input type="hidden" name="studentBachelor_CertificationPath" value="@Model.studentBachelor_CertificationPath" />
+                                <span asp-validation-for="studentBachelor_Certification" class="text-danger"></span>
+
+                                @if (!string.IsNullOrEmpty(Model.studentBachelor_CertificationPath))
+                                {
+                                    <div class="mt-2">
+                                        <a href="@Model.studentBachelor_CertificationPath" target="_blank">View Uploaded Certificate</a>
+                                        <br />
+                                        <img src="@Model.studentBachelor_CertificationPath" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                    </div>
+                                }
+                            </div>
+ *@                        </div>
+                        <div class="rowspacing"></div>
+
+                        <div class="row">
+                            <!-- Program / Label -->
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="Program" class="form-label heading16 labelspacing" id="Country_L">
+                                            Program:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <!-- Program / Dropdown -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <div style="position: relative;  width: 100%;">
+                                            <input type="hidden" asp-for="AdmissionMajorId" id="selectedAdmissionMajorId" />
+                                            <input type="hidden" asp-for="major_no" id="selectedProgramId" />
+
+                                            <select class="form-select heading15"
+                                                    id="dropdownProgram"
+                                                    data-selected="@Model.AdmissionMajorId"
+                                                    data-get-majors-url="@Url.Action("GetMajors", "AdmissionCatalog")"
+                                                    style="width: 100%; padding-left: 30px; background-image:none !important">
+                                                <option value="">Select Program</option>
+                                            </select>
+                                            <i class="fa-solid fa-caret-down" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                        </div>
+                                        <span asp-validation-for="AdmissionMajorId" class="text-danger"></span>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="SemesterText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                            Current Semester:
+                                        </label>
+                                    </div>
+                                    <!-- Semester Text -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control"
+                                               value="@Model.semesterId"
+                                               disabled>
+                                        <input type="hidden" name="semesterId" value="@Model.semesterId" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="rowspacing"></div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="discount" class="form-label heading16 labelspacing">Discount %:</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="discountPercentage"
+                                               type="text"
+                                               class="form-control"
+                                               id="discount"
+                                               readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            @*                             <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="requiredDiscount" class="form-label heading16 labelspacing">The Required Discount %:</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control" id="requiredDiscount" name="requiredDiscount" value="@Model.requiredDiscount" />
+                                    </div>
+                                </div>
+                            </div>
+ *@                        </div>
+
+                        <!-- Names -->
+                        <!-- Student English Name (4 parts) -->
+                        <div class="row">
+                            <div class="col-lg-2">
+                                <label class="form-label heading16 labelspacing">
+                                    Arabic Name <span style="color:red">*</span>
+                                </label>
+                            </div>
+
+                            <div class="col-lg-10" style="padding-left:8px">
+                                <div class="row g-2">
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="ArabicFirstName" value="@Model.ArabicFirstName"
+                                               class="form-control"
+                                               placeholder="First Name"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="ArabicFatherName" value="@Model.ArabicFatherName"
+                                               class="form-control"
+                                               placeholder="Father Name"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="ArabicGrandFatherName" value="@Model.ArabicGrandFatherName"
+                                               class="form-control"
+                                               placeholder="Grandfather Name"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="ArabicFamilyName" value="@Model.ArabicFamilyName"
+                                               class="form-control"
+                                               placeholder="Family Name"
+                                               required />
+                                    </div>
+                                    <input type="hidden" name="studentNameArabic" id="FullEnglishName" value="@Model.studentNameArabic" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rowspacing"></div>
+                        <!-- Student English Name (4 parts) -->
+
+                        <div class="row">
+                            <div class="col-lg-2">
+                                <label class="form-label heading16 labelspacing">
+                                    English Name <span style="color:red">*</span>
+                                </label>
+                            </div>
+
+                            <div class="col-lg-10" style="padding-left:8px">
+                                <div class="row g-2">
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="EnglishFirstName" value="@Model.EnglishFirstName"
+                                               class="form-control"
+                                               placeholder="First Name"
+                                               dir="ltr"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="EnglishFatherName" value="@Model.EnglishFatherName"
+                                               class="form-control"
+                                               placeholder="Father Name"
+                                               dir="ltr"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="EnglishGrandFatherName" value="@Model.EnglishGrandFatherName"
+                                               class="form-control"
+                                               placeholder="Grandfather Name"
+                                               dir="ltr"
+                                               required />
+                                    </div>
+
+                                    <div class="col-lg-3">
+                                        <input asp-for="EnglishFamilyName" value="@Model.EnglishFamilyName"
+                                               class="form-control"
+                                               placeholder="Family Name"
+                                               dir="ltr"
+                                               required />
+                                    </div>
+                                    <input type="hidden" name="studentNameEnglish" id="FullEnglishName" value="@Model.studentNameEnglish" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ID + Nationality -->
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="Nationality" class="form-label heading16 labelspacing" id="Nationality_L">Nationality: <span style="color:red">*</span></label>
+                                    </div>
+                                    <!-- Nationality / DropDownList -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <div class="input-group">
+                                            <input class="form-control" type="search" value="@selectedNationality" id="recivedGroup" onkeyup="filterNationality()" placeholder="Search for a country..." />
+
+                                            <input type="hidden" asp-for="nationalityId" id="selectedNationalityId" value="@Model.nationalityId" name="nationalityId">
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+                                        <ul id="nationalityOptions" class="list-group mt-2" style="display: none;">
+                                            @foreach (var nationality in Model.Nationalities)
+                                            {
+                                                <li class="list-group-item nationality-item" data-id="@nationality.nationalityId">
+                                                    @nationality.nationalityEnglish
+                                                </li>
+                                            }
+                                        </ul>
+                                        <span asp-validation-for="nationalityId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">
+                                            Mother’s Name <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="motherName" class="form-control" value="@Model.motherName" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+                <!-- Birth Basic Info -->
+                <div class="card mb-4">
+                    <div class="card-header heading16">Place of Birth</div>
+                    <div class="card-body">
+
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="Country" class="form-label heading16 labelspacing" id="Country_L">
+                                            Country:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <!-- Country / dropdown list -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <div class="input-group">
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value="@selectedCountry0"
+                                                   id="countrySearch0"
+                                                   data-list="countryOptions0"
+                                                   data-target="selectedCountryId0"
+                                                   onkeyup="filterCountry()"
+                                                   placeholder="Search for a country..." />
+
+                                            <input type="hidden"
+                                                   asp-for="countryId0"
+                                                   id="selectedCountryId0"
+                                                   name="countryId0"
+                                                   value="@Model.countryId0"
+                                                   required>
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+
+                                        <ul id="countryOptions0" class="list-group mt-2" style="display: none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item" data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+                                        <span asp-validation-for="countryId0" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- City / Governorate -->
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                            City / Governorate :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control" asp-for="city" id="goverText" name="city" value="@Model.city" required>
+                                        <span asp-validation-for="city" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date of Birth -->
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">Date of Birth <span style="color:red">*</span></label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="date"
+                                               class="form-control"
+                                               name="dateOfBirth"
+                                               value="@(Model.dateOfBirth?.ToString("yyyy-MM-dd"))" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rowspacing"></div>
+
+                        <!-- Dates -->
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">
+                                            Passport Number / National ID:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="nationalId" class="form-control" value="@Model.nationalId" required />
+                                        <span asp-validation-for="nationalId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">Issue Date</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="date"
+                                               class="form-control"
+                                               name="createdDate"
+                                               value="@(Model.createdDate?.ToString("yyyy-MM-dd"))" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">Expiry Date</label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="date"
+                                               class="form-control"
+                                               name="expiredDate"
+                                               value="@(Model.expiredDate?.ToString("yyyy-MM-dd"))" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">
+                                            Document Number:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="docId" class="form-control" value="@Model.docId" required />
+                                        <span asp-validation-for="docId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="identityDoc" class="form-label heading16 labelspacing">
+                                            Passport / ID / Birth Certificate:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="identityDoc" name="studentProof_of_Identity" accept=".pdf, .jpg, .png">
+                                        <span asp-validation-for="studentProof_of_Identity" class="text-danger"></span>
+
+                                        <input type="hidden" name="studentProof_of_IdentityPath" value="@Model.studentProof_of_IdentityPath" />
+
+                                        @if (!string.IsNullOrEmpty(Model.studentProof_of_IdentityPath))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentProof_of_IdentityPath" target="_blank">View uploaded document</a>
+                                                <br />
+                                                <img src="@Model.studentProof_of_IdentityPath" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="genderDropdown" class="form-label heading16 labelspacing" id="gender_L">
+                                            Gender:<span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <select id="genderDropdown" class="form-control" onchange="setGenderValue(this)">
+                                            <option value="">-- Select Gender --</option>
+                                            <option value="1" selected="@(Model.studentGender == 1 ? "selected" : null)">Male</option>
+                                            <option value="0" selected="@(Model.studentGender == 0 ? "selected" : null)">Female</option>
+                                        </select>
+
+                                        <input type="hidden" name="studentGender" id="studentGender" value="@Model.studentGender" />
+                                        <span asp-validation-for="studentGender" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="rowspacing"></div>
+                <div class="card mb-4">
+                    <div class="card-header heading16">Student Address</div>
+                    <div class="card-body">
+
+                        <!-- address Info -->
+                        <div class="row">
+
+                            <div class="col-lg-3">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="countrySearch" class="form-label heading16 labelspacing" id="Country_L">
+                                            Country:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <!-- Country / dropdown list -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+
+                                        <div class="input-group">
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value="@selectedCountry"
+                                                   id="countrySearch"
+                                                   data-list="countryOptions"
+                                                   data-target="selectedCountryId"
+                                                   onkeyup="filterCountry()"
+                                                   placeholder="Search for a country..." />
+
+                                            <input type="hidden"
+                                                   asp-for="countryId"
+                                                   id="selectedCountryId"
+                                                   name="countryId"
+                                                   value="@Model.countryId"
+                                                   required />
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+
+                                        <!-- Options list -->
+                                        <ul id="countryOptions" class="list-group mt-2" style="display: none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item" data-id="@country.countryId">
+                                                    @country.countryArabic
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">
+                                            City / Governorate :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="text" class="form-control" asp-for="cityAdd" id="goverText" name="cityAdd" value="@Model.cityAdd" required>
+                                        <span asp-validation-for="cityAdd" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="phone" class="form-label heading16 labelspacing" id="phone_L">
+                                            Phone Number:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input name="studentPhone" asp-for="studentPhone" type="text" class="form-control" id="phone" value="@Model.studentPhone" required>
+                                        <span asp-validation-for="studentPhone" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="Email" class="form-label heading16 labelspacing" id="Email_L">
+                                            Email:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input name="studentEmail" asp-for="studentEmail" type="email" class="form-control" id="Email" value="@Model.studentEmail" required>
+                                        <span asp-validation-for="studentEmail" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+
+                <div class="card mb-4">
+                    <div class="card-header heading16">Additional Information</div>
+                    <div class="card-body">
+
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isDisabled" value="@Model.isDisabled">
+                            <label class="form-check-label heading16">Does the student have a disability?</label>
+                        </div>
+
+                        <input asp-for="disabilityType" class="form-control mt-2" placeholder="Type of disability" value="@Model.disabilityType">
+
+                        <div class="rowspacing"></div>
+
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="isPreviousAAU" value="@Model.isPreviousAAU">
+                            <label class="form-check-label heading16">Has the student previously studied at AAU?</label>
+                        </div>
+
+                        <div class="row mt-2">
+                            <div class="col-lg-6">
+                                <input asp-for="previousStudentId" class="form-control" placeholder="Previous university number" value="@Model.previousStudentId">
+                            </div>
+                            <div class="col-lg-6">
+                                <input asp-for="previousMajor" class="form-control" placeholder="Previous major" value="@Model.previousMajor">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+                <!-- certif Info -->
+                <div class="card mb-4">
+                    <div class="card-header heading16">General Secondary Certificate</div>
+                    <div class="card-body">
+
+                        <div class="row">
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="countrySearch3" class="form-label heading16 labelspacing" id="Country_L">
+                                            Certificate Issuing Country:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <!-- Country / Dropdown -->
+                                    <div class="col-lg-8" style="padding-left:8px">
+
+                                        <div class="input-group">
+                                            <!-- Input linked to its list -->
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value="@selectedCountry3"
+                                                   id="countrySearch3"
+                                                   data-list="countryOptions3"
+                                                   data-target="selectedCountryId3"
+                                                   onkeyup="filterCountry()"
+                                                   placeholder="Search for country..." />
+
+                                            <input type="hidden"
+                                                   asp-for="countryId3"
+                                                   id="selectedCountryId3"
+                                                   name="countryId3"
+                                                   value="@Model.countryId3"
+                                                   required />
+
+                                            <span class="input-group-append">
+                                                <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </span>
+                                        </div>
+
+                                        <!-- Options list for this input -->
+                                        <ul id="countryOptions3" class="list-group mt-2" style="display: none;">
+                                            @foreach (var country in Model.Countries)
+                                            {
+                                                <li class="list-group-item country-item" data-id="@country.countryId">
+                                                    @country.countryEnglish
+                                                </li>
+                                            }
+                                        </ul>
+
+                                        <span asp-validation-for="countryId3" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">
+                                            School Name <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="studentSchool" class="form-control" value="@Model.studentSchool">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label class="form-label heading16">
+                                            Stream <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input asp-for="schoolBranch" value="@Model.schoolBranch" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="rowspacing"></div>
+
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <input asp-for="certificateType" class="form-control" value="@Model.certificateType" placeholder="Certificate Type">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="certificateYear" value="@Model.certificateYear" class="form-control" placeholder="Year Obtained">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="seatNumber" value="@Model.seatNumber" class="form-control" placeholder="Seat Number (Optional)">
+                            </div>
+                        </div>
+
+                        <div class="rowspacing"></div>
+
+                        <div class="row">
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="highSchoolCert" class="form-label heading16 labelspacing">
+                                            General Secondary Certificate:
+                                            <span style="color:red">*</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="highSchoolCert" name="studentHigh_School_Certificate" accept=".pdf, .jpg, .png">
+                                        <span asp-validation-for="studentHigh_School_Certificate" class="text-danger"></span>
+                                        <input type="hidden" name="studentHigh_School_CertificatePath" value="@Model.studentHigh_School_CertificatePath" />
+                                        @if (!string.IsNullOrEmpty(Model.studentHigh_School_CertificatePath))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentHigh_School_CertificatePath" target="_blank">View Uploaded Certificate</a>
+                                                <br />
+                                                <img src="@Model.studentHigh_School_CertificatePath" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="highSchoolCert2" class="form-label heading16 labelspacing">
+                                            General Secondary Certificate2:
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="highSchoolCert2" name="studentHigh_School_Certificate2" accept=".pdf, .jpg, .png">
+                                        <input type="hidden" name="studentHigh_School_CertificatePath2" value="@Model.studentHigh_School_CertificatePath2" />
+                                        @if (!string.IsNullOrEmpty(Model.studentHigh_School_CertificatePath2))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentHigh_School_CertificatePath2" target="_blank">View Uploaded Certificate</a>
+                                                <br />
+                                                <img src="@Model.studentHigh_School_CertificatePath2" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="highSchoolCert3" class="form-label heading16 labelspacing">
+                                            General Secondary Certificate3:
+
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="highSchoolCert3" name="studentHigh_School_Certificate3" accept=".pdf, .jpg, .png">
+                                        <input type="hidden" name="studentHigh_School_CertificatePath3" value="@Model.studentHigh_School_CertificatePath3" />
+                                        @if (!string.IsNullOrEmpty(Model.studentHigh_School_CertificatePath3))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentHigh_School_CertificatePath3" target="_blank">View Uploaded Certificate</a>
+                                                <br />
+                                                <img src="@Model.studentHigh_School_CertificatePath3" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="rowspacing"></div>
+
+                        <div class="row">
+
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="highSchoolCert4" class="form-label heading16 labelspacing">
+                                            General Secondary Certificate4:
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="highSchoolCert4" name="studentHigh_School_Certificate4" accept=".pdf, .jpg, .png">
+                                        <input type="hidden" name="studentHigh_School_CertificatePath4" value="@Model.studentHigh_School_CertificatePath4" />
+                                        @if (!string.IsNullOrEmpty(Model.studentHigh_School_CertificatePath4))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentHigh_School_CertificatePath4" target="_blank">View Uploaded Certificate</a>
+                                                <br />
+                                                <img src="@Model.studentHigh_School_CertificatePath4" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="row g-0">
+                                    <div class="col-lg-4">
+                                        <label for="highSchoolCert5" class="form-label heading16 labelspacing">
+                                            General Secondary Certificate5:
+
+                                        </label>
+                                    </div>
+                                    <div class="col-lg-8" style="padding-left:8px">
+                                        <input type="file" class="form-control" id="highSchoolCert5" name="studentHigh_School_Certificate5" accept=".pdf, .jpg, .png">
+                                        <input type="hidden" name="studentHigh_School_CertificatePath5" value="@Model.studentHigh_School_CertificatePath5" />
+                                        @if (!string.IsNullOrEmpty(Model.studentHigh_School_CertificatePath5))
+                                        {
+                                            <div class="mt-2">
+                                                <a href="@Model.studentHigh_School_CertificatePath5" target="_blank">View Uploaded Certificate</a>
+                                                <br />
+                                                <img src="@Model.studentHigh_School_CertificatePath5" alt="Uploaded Certificate" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <input asp-for="studentGPA" class="form-control" placeholder="GPA" value="@Model.studentGPA">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+
+                @if (userType == "Super Admin")
+                {
+                    <div class="row">
+                        <!-- Agent Name / Label -->
+                        <div class="col-lg-2">
+                            <label for="agentName" class="form-label heading16 labelspacing">
+                                Agent Name:<span style="color:red">*</span>
+                            </label>
+                        </div>
+
+                        <!-- Agent Name / TextBox -->
+                        <div class="col-lg-10">
+                            <div class="row g-0">
+                                <div class="">
+                                    <div class="input-group">
+                                        <input class="form-control" type="search" value="@selectedAgent" id="agentSearch" onkeyup="filterAgent()" placeholder="Search Agent...">
+
+                                        @if (userType == "Admin")
+                                        {
+                                            <input type="hidden" id="selectedAgentId" asp-for="agentId" name="agentId" required />
+                                        }
+                                        else
+                                        {
+                                            <input type="hidden" id="selectedAgentId" asp-for="agentId" name="agentId" />
+                                        }
+
+                                        <span class="input-group-append">
+                                            <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+
+                                    <span asp-validation-for="agentId" class="text-danger"></span>
+
+                                    <!-- Options list -->
+                                    <ul id="agentOptions" class="list-group mt-2" style="display: none;">
+                                        @foreach (var agent in Model.Agents)
+                                        {
+                                            <li class="list-group-item agent-item" data-id="@agent.agentId">
+                                                @agent.agentNameEnglish
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <!-- Transfer Student Selection -->
+                    <div class="col-lg-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="TransferCheckbox" name="isTransfer" onchange="toggleUploads()" value="1"
+                                   @(Model.isTransfer == 1 ? "checked" : "") />
+                            <label class="form-check-label heading16" for="Transfer">
+                                Transfer Student
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Diploma Student Selection -->
+                    <div class="col-lg-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="DiplomaCheckbox" name="isDiploma" value="1" onchange="toggleUploads()"
+                                   @(Model.isDiploma == 1 ? "checked" : "") />
+                            <label class="form-check-label heading16" for="Diploma">
+                                Diploma
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diploma Info -->
+                <div id="diplomaUploadDiv" style="display:none;">
+                    <div class="card mb-4">
+
+                        <div class="card-header heading16">
+                            Diploma Certificate
+                        </div>
+
+                        <div class="card-body">
+
+                            <!-- Row 1 -->
+                            <div class="row">
+
+                                <!-- Country -->
+                                <div class="col-lg-3">
+                                    <label class="form-label heading16">
+                                        Certificate Issuing Country
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <input type="search"
+                                               class="form-control"
+                                               value="@selectedCountry1"
+                                               id="diplomaCountrySearch"
+                                               data-list="diplomaCountryOptions"
+                                               data-target="diplomaCountryId"
+                                               placeholder="Search for a country..."
+                                               onkeyup="filterCountry()">
+
+                                        <input type="hidden"
+                                               asp-for="countryId1"
+                                               id="diplomaCountryId"
+                                               name="countryId1"
+                                               value="@Model.countryId1"
+                                               required>
+
+                                        <button class="btn btn-outline-secondary bg-white" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </div>
+
+                                    <ul id="diplomaCountryOptions"
+                                        class="list-group mt-2"
+                                        style="display:none;">
+                                        @foreach (var country in Model.Countries)
+                                        {
+                                            <li class="list-group-item country-item" data-id="@country.countryId">
+                                                @country.countryEnglish
+                                            </li>
+                                        }
+                                    </ul>
+
+                                    <span asp-validation-for="countryId1" class="text-danger"></span>
+                                </div>
+
+                                <!-- Faculty -->
+                                <div class="col-lg-3">
+                                    <label class="form-label heading16">
+                                        Faculty Name
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="studentFaculty" class="form-control" value="@Model.studentFaculty">
+                                    <span asp-validation-for="studentFaculty" class="text-danger"></span>
+                                </div>
+
+                                <!-- Major -->
+                                <div class="col-lg-3">
+                                    <label class="form-label heading16">
+                                        Major
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="schoolMajor" class="form-control" value="@Model.schoolMajor">
+                                    <span asp-validation-for="schoolMajor" class="text-danger"></span>
+                                </div>
+
+                                <!-- Diploma Report -->
+                                <div class="col-lg-3">
+                                    <label for="diplomaReportInput" class="form-label heading16">
+                                        Transcript (Diploma)
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="file"
+                                           class="form-control"
+                                           id="diplomaReportInput"
+                                           name="studentGrades_Report1"
+                                           accept=".pdf,.jpg,.png">
+                                    <input type="hidden" name="studentGrades_ReportPath1" value="@Model.studentGrades_ReportPath1" />
+
+                                    <span asp-validation-for="studentGrades_Report1" class="text-danger"></span>
+
+                                    @if (!string.IsNullOrEmpty(Model.studentGrades_ReportPath1))
+                                    {
+                                        <div class="mt-2">
+                                            <a href="@Model.studentGrades_ReportPath1" target="_blank">View Uploaded Report</a>
+                                            <br />
+                                            <img src="@Model.studentGrades_ReportPath1" alt="Uploaded Report" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                        </div>
+                                    }
+                                </div>
+
+                            </div>
+
+                            <div class="rowspacing"></div>
+
+                            <!-- Row 2 -->
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <label class="form-label heading16">Year of Graduation</label>
+                                    <input asp-for="certificateYearDip"
+                                           class="form-control"
+                                           placeholder="Year of Graduation">
+                                    <span asp-validation-for="certificateYearDip" value="@Model.certificateYearDip"
+                                          class="text-danger"></span>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <label class="form-label heading16">GPA</label>
+                                    <input asp-for="studentDiplomaGPA"
+                                           class="form-control"
+                                           placeholder="GPA">
+                                    <span asp-validation-for="studentDiplomaGPA" value="@Model.studentDiplomaGPA"
+                                          class="text-danger"></span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transfer Info -->
+                <div id="transferUploadDiv" style="display:none;">
+                    <div class="card mb-4">
+                        <div class="card-header heading16">
+                            For Students Transferring from Other Universities
+                        </div>
+
+                        <div class="card-body">
+
+                            <!-- Country + University -->
+                            <div class="row">
+
+                                <!-- Country -->
+                                <div class="col-lg-3">
+                                    <label class="form-label heading16">
+                                        Country <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="input-group">
+
+                                        <input type="search"
+                                               class="form-control"
+                                               value="@selectedCountry2"
+                                               id="countrySearch2"
+                                               data-list="countryOptions2"
+                                               data-target="selectedCountryId2"
+                                               placeholder="Search for a country..."
+                                               onkeyup="filterCountry()">
+                                        <input type="hidden"
+                                               asp-for="countryId2"
+                                               id="selectedCountryId2"
+                                               value="@Model.countryId2"
+                                               required>
+
+                                        <span class="input-group-append">
+                                            <button class="btn btn-outline-secondary bg-white border ms-n5" type="button">
+                                                <i class="fa fa-search"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+
+                                    <ul id="countryOptions2" class="list-group mt-2" style="display:none;">
+                                        @foreach (var country in Model.Countries)
+                                        {
+                                            <li class="list-group-item country-item"
+                                                data-id="@country.countryId">
+                                                @country.countryEnglish
+                                            </li>
+                                        }
+                                    </ul>
+
+                                    <span asp-validation-for="countryId2" class="text-danger"></span>
+                                </div>
+
+                                <!-- University -->
+                                <div class="col-lg-3">
+                                    <label class="form-label heading16">
+                                        University Name <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="studentUniversity" class="form-control" value="@Model.studentUniversity" required>
+                                    <span asp-validation-for="studentUniversity" class="text-danger"></span>
+                                </div>
+                                <div class="col-lg-3">
+                                    <label for="transferReport" class="form-label heading16">
+                                        Transcript (Transfer Student):
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="file"
+                                           class="form-control"
+                                           id="transferReport"
+                                           name="studentGrades_Report"
+                                           accept=".pdf,.jpg,.png">
+                                    <input type="hidden" name="studentGrades_ReportPath" value="@Model.studentGrades_ReportPath" />
+
+                                    <span asp-validation-for="studentGrades_Report" class="text-danger"></span>
+
+                                    @if (!string.IsNullOrEmpty(Model.studentGrades_ReportPath))
+                                    {
+                                        <div class="mt-2">
+                                            <a href="@Model.studentGrades_ReportPath" target="_blank">View Uploaded Report</a>
+                                            <br />
+                                            <img src="@Model.studentGrades_ReportPath" alt="Uploaded Report" style="max-width: 200px; max-height: 200px; margin-top:10px;" />
+                                        </div>
+                                    }
+                                </div>
+
+                            </div>
+
+                            <div class="rowspacing"></div>
+
+                            <!-- Admission Method -->
+                            <div class="row">
+
+                                <div class="col-lg-6">
+                                    <label class="form-label heading16">
+                                        Admission Method
+                                    </label>
+
+                                    <input type="hidden" name="admissionType" value="AGENT" />
+
+                                    <label class="form-check-label heading16">
+                                        Through Authorized Agent / Office
+                                    </label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           disabled>
+
+                                    <label class="form-check-label heading16">
+                                        Personal
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Agent Name -->
+                            <div class="col-lg-6">
+                                <label class="form-label heading16">
+                                    Authorized Agent Name
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="@Model.agentId"
+                                       disabled>
+
+                                <input type="hidden"
+                                       name="agentId"
+                                       value="@Model.agentId">
+                            </div>
+
+                        </div>
+
+                        <div class="rowspacing"></div>
+
+                        <!-- Referrers (Optional) -->
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <label class="form-label heading16">
+                                    Referrer Names (Optional)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Referrer 1 -->
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer1Name" value="@Model.Referrer1Name"
+                                       class="form-control"
+                                       placeholder="First Referrer Name">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer1Relation" value="@Model.Referrer1Relation"
+                                       class="form-control"
+                                       placeholder="Relationship">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer1Phone" value="@Model.Referrer1Phone"
+                                       class="form-control"
+                                       placeholder="Phone Number">
+                            </div>
+                        </div>
+
+                        <div class="rowspacing"></div>
+
+                        <!-- Referrer 2 -->
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer2Name" value="@Model.Referrer2Name"
+                                       class="form-control"
+                                       placeholder="Second Referrer Name">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer2Relation" value="@Model.Referrer2Relation"
+                                       class="form-control"
+                                       placeholder="Relationship">
+                            </div>
+                            <div class="col-lg-4">
+                                <input asp-for="Referrer2Phone" value="@Model.Referrer2Phone"
+                                       class="form-control"
+                                       placeholder="Phone Number">
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+
+
+
+
+
+                <div class="partspacing"></div>
+
+
+
+                <div class="partspacing"></div>
+                <!-- Legal Declaration -->
+                <div class="card mb-4">
+                    <div class="card-header heading16">
+                        Legal Declaration and Acknowledgment
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="form-check">
+
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="legalDeclaration"
+                                   name="LegalDeclaration"
+                                   value="true"
+                                   @(Model.LegalDeclaration ? "checked" : "") />
+                            <label class="form-check-label heading16" for="legalDeclaration">
+                                I hereby declare and acknowledge that all the information and data entered are correct and complete,
+                                and I bear full legal responsibility in the event that this proves otherwise,
+                                and I agree that the university has the right to cancel the application and take the necessary legal actions.
+                            </label>
+                        </div>
+
+                        <!-- validation message -->
+                        <span class="text-danger">
+                            You must agree to the declaration before submitting the application
+                        </span>
+
+                    </div>
+                </div>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <div class="col-lg-8">
+                        <!-- Save button -->
+                        <div class="btnwrap" style=" ">
+                            <button type="submit" class="mybtn heading15" style="background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important;border:none;">
+                                Save
+                                <span class="line" style="border: 0px;"></span>
+                                <span class="areaborder" style="border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important;"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+
+            </form>
+
+
+            <div class="rowspacing"></div>
+
+
+        </div>
+    </div>
+
+
+
+    <div class="container-fluid padding margin">
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="heading14">Student Code:</h2>
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <!------------------- studentCode/textBox-------------->
+                    <div class="col-lg-8">
+                        <input type="text" class="form-control " id="studentCode" value="@Model.studentCode" placeholder="" style="border: 3px solid #daa328;" disabled>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+
+
+            </div>
+        </div>
+        <div class="rowspacing"></div>
+    </div>
+</main>
+<script>
+           function filterAgent() {
+
+               var input = document.getElementById('agentSearch');
+               var filter = input.value.toUpperCase();
+               var list = document.getElementById('agentOptions');
+               var items = list.getElementsByTagName('li');
+
+
+               list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+               for (var i = 0; i < items.length; i++) {
+                   var txtValue = items[i].textContent || items[i].innerText;
+                   items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+               }
+           }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+
+               var agentOptions = document.getElementById('agentOptions');
+
+               agentOptions.addEventListener('click', function (event) {
+                   if (event.target && event.target.matches('.agent-item')) {
+                       var agentName = event.target.innerText;
+                       var agentId = event.target.getAttribute('data-id');
+
+
+                       document.getElementById('agentSearch').value = agentName;
+                       document.getElementById('selectedAgentId').value = agentId;
+
+
+                       agentOptions.style.display = "none";
+                   }
+               });
+
+
+               document.addEventListener('click', function (event) {
+                   var isClickInside = document.getElementById('agentSearch').contains(event.target) ||
+                                       agentOptions.contains(event.target);
+                   if (!isClickInside) {
+                       agentOptions.style.display = "none";
+                   }
+               });
+           });
+
+
+                                  function toggleUploads() {
+           const transferChecked = document.getElementById("TransferCheckbox").checked;
+           const diplomaChecked = document.getElementById("DiplomaCheckbox").checked;
+
+           const transferDiv = document.getElementById("transferUploadDiv");
+           const diplomaDiv = document.getElementById("diplomaUploadDiv");
+
+           const transferInput = document.getElementById("transferReport");
+           const diplomaInput = document.getElementById("diplomaReport");
+
+
+           if (transferChecked) {
+               transferDiv.style.display = "block";
+               transferInput.setAttribute("required", "required");
+           } else {
+               transferDiv.style.display = "none";
+               transferInput.removeAttribute("required");
+           }
+
+
+           if (diplomaChecked) {
+               diplomaDiv.style.display = "block";
+               diplomaInput.setAttribute("required", "required");
+           } else {
+               diplomaDiv.style.display = "none";
+               diplomaInput.removeAttribute("required");
+           }
+       }
+
+
+       window.onload = toggleUploads;
+
+
+     function filterCountry() {
+        var input = event.target;
+        var filter = input.value.toUpperCase();
+        var listId = input.getAttribute("data-list");
+        var list = document.getElementById(listId);
+        var items = list.getElementsByTagName('li');
+
+
+        list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+        for (var i = 0; i < items.length; i++) {
+            var txtValue = items[i].textContent || items[i].innerText;
+            items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+        document.querySelectorAll('input[data-list]').forEach(function(input) {
+            const listId = input.getAttribute('data-list');
+            const list = document.getElementById(listId);
+
+
+            input.addEventListener('keyup', function () {
+                const filter = input.value.toUpperCase();
+                const items = list.getElementsByTagName('li');
+
+                list.style.display = input.value.length > 0 ? 'block' : 'none';
+
+                for (let i = 0; i < items.length; i++) {
+                    const txtValue = items[i].textContent || items[i].innerText;
+                    items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+                }
+            });
+
+
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (input.value.length > 0) {
+                    list.style.display = 'block';
+                }
+            });
+
+
+            list.addEventListener('click', function(e) {
+                if (e.target && e.target.matches('li.country-item')) {
+                    e.stopPropagation();
+                    input.value = e.target.innerText;
+                    const hiddenInputId = input.getAttribute('data-target');
+                    if (hiddenInputId) {
+                        document.getElementById(hiddenInputId).value = e.target.getAttribute('data-id');
+                    }
+                    list.style.display = 'none';
+                }
+            });
+        });
+
+
+        document.addEventListener('click', function () {
+            document.querySelectorAll('ul.list-group').forEach(function(list) {
+                list.style.display = 'none';
+            });
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const degreeDropdown = document.getElementById("dropdownDegree");
+        const facultyDropdown = document.getElementById("dropdownFaculty");
+        const programDropdown = document.getElementById("dropdownProgram");
+        const selectedDegreeInput = document.getElementById("selectedDegreeId");
+        const selectedFacultyInput = document.getElementById("selectedFacultyId");
+        const selectedAdmissionMajorInput = document.getElementById("selectedAdmissionMajorId");
+        const selectedProgramInput = document.getElementById("selectedProgramId");
+        const discountInput = document.getElementById("discount");
+        const discountHiddenInput = document.getElementById("discountHidden");
+        const semesterInput = document.querySelector('input[name="semesterId"]');
+        const getMajorsUrl = programDropdown.dataset.getMajorsUrl;
+
+        if (!degreeDropdown || !facultyDropdown || !programDropdown ||
+            !selectedDegreeInput || !selectedFacultyInput ||
+            !selectedAdmissionMajorInput || !selectedProgramInput ||
+            !discountInput || !semesterInput || !getMajorsUrl) {
+            return;
+        }
+
+        const getValue = (item, ...keys) => {
+            for (const key of keys) {
+                if (item[key] !== undefined && item[key] !== null) {
+                    return item[key];
+                }
+            }
+
+            return null;
+        };
+
+        const clearMajor = () => {
+            programDropdown.innerHTML = '<option value="">Select Program</option>';
+            selectedAdmissionMajorInput.value = "";
+            selectedProgramInput.value = "";
+            discountInput.value = "";
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = "";
+            }
+        };
+
+        const applySelectedMajor = () => {
+            const selectedOption = programDropdown.options[programDropdown.selectedIndex];
+            const hasSelection = selectedOption && programDropdown.value !== "";
+            const discount = hasSelection
+                ? (selectedOption.dataset.discountPercentage || "0")
+                : "";
+
+            selectedAdmissionMajorInput.value = hasSelection
+                ? programDropdown.value
+                : "";
+
+
+            selectedProgramInput.value = hasSelection
+                ? (selectedOption.dataset.oracleMajorNo || "")
+                : "";
+
+            discountInput.value = discount;
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = discount;
+            }
+        };
+
+        const loadMajors = async (selectedAdmissionMajorId = "") => {
+            clearMajor();
+
+            selectedDegreeInput.value = degreeDropdown.value === "0"
+                ? ""
+                : degreeDropdown.value;
+
+            selectedFacultyInput.value = facultyDropdown.value === "0"
+                ? ""
+                : facultyDropdown.value;
+
+            if (!selectedDegreeInput.value ||
+                !selectedFacultyInput.value ||
+                !semesterInput.value) {
+                return;
+            }
+
+            programDropdown.disabled = true;
+
+            try {
+                const query = new URLSearchParams({
+                    facultyNo: selectedFacultyInput.value,
+                    degreeId: selectedDegreeInput.value,
+                    semesterId: semesterInput.value
+                });
+
+                if (selectedAdmissionMajorId) {
+                    query.set("selectedAdmissionMajorId", selectedAdmissionMajorId);
+                }
+
+                const response = await fetch(`${getMajorsUrl}?${query}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error("تعذر تحميل البرامج");
+                }
+
+                const responseBody = await response.json();
+                const majors = Array.isArray(responseBody)
+                    ? responseBody
+                    : (responseBody.data || []);
+
+                majors.forEach(major => {
+                    const admissionMajorId = getValue(
+                        major,
+                        "admissionMajorId",
+                        "AdmissionMajorId"
+                    );
+
+                    if (admissionMajorId === null) {
+                        return;
+                    }
+
+                    const option = document.createElement("option");
+                    option.value = admissionMajorId;
+                    option.textContent = getValue(
+                        major,
+                        "majorNameEnglish",
+                        "MajorNameEnglish",
+                        "majorNameEn",
+                        "MajorNameEn",
+                        "majorNameArabic",
+                        "MajorNameArabic",
+                        "majorNameAr",
+                        "MajorNameAr",
+                        "displayName",
+                        "DisplayName",
+                        "majorName",
+                        "MajorName"
+                    ) || "";
+
+                    option.dataset.oracleMajorNo = getValue(
+                        major,
+                        "oracleMajorNo",
+                        "OracleMajorNo",
+                        "majorNo",
+                        "MajorNo"
+                    ) || "";
+
+                    option.dataset.discountPercentage = getValue(
+                        major,
+                        "discountPercentage",
+                        "DiscountPercentage",
+                        "discount",
+                        "Discount"
+                    ) ?? 0;
+
+                    option.selected = String(admissionMajorId) ===
+                        String(selectedAdmissionMajorId);
+
+                    programDropdown.appendChild(option);
+                });
+
+                applySelectedMajor();
+            }
+            catch (error) {
+                clearMajor();
+                console.error(error);
+            }
+            finally {
+                programDropdown.disabled = false;
+            }
+        };
+
+        programDropdown.addEventListener("change", applySelectedMajor);
+        degreeDropdown.addEventListener("change", () => loadMajors());
+        facultyDropdown.addEventListener("change", () => loadMajors());
+
+        const initiallySelectedMajor =
+            programDropdown.dataset.selected ||
+            selectedAdmissionMajorInput.value ||
+            "";
+
+        loadMajors(initiallySelectedMajor);
+    });
+
+
+        function filterNationality() {
+                               var input, filter, list, items, i, txtValue;
+                               input = document.getElementById('recivedGroup');
+                               filter = input.value.toUpperCase();
+                               list = document.getElementById('nationalityOptions');
+                               items = list.getElementsByTagName('li');
+
+
+                               if (input.value.length > 0) {
+                                   list.style.display = "block";
+                               } else {
+                                   list.style.display = "none";
+                               }
+
+
+                               for (i = 0; i < items.length; i++) {
+                                   txtValue = items[i].textContent || items[i].innerText;
+                                   if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                       items[i].style.display = "";
+                                   } else {
+                                       items[i].style.display = "none";
+                                   }
+                               }
+                           }
+
+
+                           document.querySelectorAll('.nationality-item').forEach(function(item) {
+                               item.addEventListener('click', function() {
+                                   var nationalityName = item.innerText;
+                                   var nationalityId = item.getAttribute('data-id');
+
+
+                                   document.getElementById('recivedGroup').value = nationalityName;
+
+
+                                   document.getElementById('selectedNationalityId').value = nationalityId;
+
+
+                                   document.getElementById('nationalityOptions').style.display = "none";
+                               });
+                           });
+
+
+           document.getElementById("dropdownDegree").addEventListener("change", function () {
+           const selectedDegreeId = parseInt(this.value);
+           document.getElementById("selectedDegreeId").value = selectedDegreeId;
+       });
+
+
+        function setGenderValue(selectElement) {
+           document.getElementById("studentGender").value = selectElement.value;
+       }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+                  const dropdown = document.getElementById('dropdownDegree');
+              const certDiv = document.getElementById('bachelorCertDiv');
+
+              const masterKeyword = "master";
+
+              function updateCertificateVisibility() {
+                  const selectedText = dropdown.options[dropdown.selectedIndex].text.toLowerCase();
+                  if (selectedText.includes(masterKeyword)) {
+                      certDiv.style.display = "block";
+                  } else {
+                      certDiv.style.display = "none";
+                  }
+              }
+
+
+              updateCertificateVisibility();
+
+
+              dropdown.addEventListener('change', updateCertificateVisibility);
+          });
+</script>

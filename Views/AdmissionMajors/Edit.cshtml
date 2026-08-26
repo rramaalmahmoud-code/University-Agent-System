@@ -1,0 +1,63 @@
+﻿@model University_Agent_System.Models.ViewModel.AdmissionMajorFormViewModel
+
+@{
+    ViewData["Title"] = "تعديل التخصص والخصم";
+    Layout = "_LayoutAdminAr";
+}
+
+<div class="container-fluid padding pre"
+     dir="rtl">
+
+    <div class="heading9">
+        تعديل التخصص والخصم
+    </div>
+
+    <div class="normal">
+        تعديل بيانات التخصص ونسبة الخصم للفصل
+        @Model.SemesterId
+    </div>
+
+    <div class="partspacing"></div>
+
+    <form asp-controller="AdmissionMajors"
+          asp-action="Edit"
+          asp-route-id="@Model.AdmissionMajorId"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <partial name="_MajorForm"
+                 model="Model" />
+
+        <div class="partspacing"></div>
+
+        <div class="buttonsgroup">
+
+            <div class="btnwrap">
+
+                <button type="submit"
+                        class="btn">
+
+                    حفظ التعديلات
+                </button>
+
+            </div>
+
+            <div class="btnwrap">
+
+                <a asp-controller="AdmissionMajors"
+                   asp-action="Index"
+                   asp-route-semesterId="@Model.SemesterId"
+                   class="btn">
+
+                    رجوع
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+

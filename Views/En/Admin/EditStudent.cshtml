@@ -1,0 +1,281 @@
+﻿
+@{
+    Layout = "_LayoutAdmin";
+}
+<main>
+    <div class="container-fluid padding margin" style="background:#d0d0cf">
+
+        <div class="row">
+            <!---------------ADD NEW STUDENT---------------->
+            <div class="col-lg-12">
+                <section id="title-wrapper" style=" justify-content: End;">
+
+                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">EDIT STUDENT</span></p></h1>
+                    <div class="lineright" style="display: block; background-color: #DAA328; "></div>
+                </section>
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <dikv class="col-lg-12">
+                        <h2 class="heading14">Student Information</h2>
+                    </dikv>
+                </div>
+
+
+                <div class="partspacing"></div>
+                <div class="row">
+                    <!-- studentName/label-->
+                    <div class="col-lg-2">
+                        <label for="studentName" class="form-label heading16 labelspacing">Student Name:</label>
+                    </div>
+                    <!------------------- studentName/textBox-------------->
+                    <div class="col-lg-10">
+                        <input type="text" class="form-control " id="studentName" placeholder="">
+                    </div>
+                </div>
+
+                <div class="rowspacing"></div>
+                <!-- label -->
+                <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="idNumber" class="form-label heading16 labelspacing" id="idNumber_L">ID Number:</label>
+                            </div>
+                            <!-- IDNumberTextBox -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="idNumber" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Nationality/label -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Nationality" class="form-label heading16 labelspacing" id="Nationality_L">Nationality:</label>
+                            </div>
+                            <!-- Nationality/DropDownList -->
+                            <div class="col-lg-8" style="padding-left:8px">
+
+                                <div class="input-group">
+                                    <input class="form-control" type="search" value="" id="recivedGroup">
+                                    <span class="input-group-append">
+                                        <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+
+
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="rowspacing"></div>
+
+                <div class="row">
+                    <!-- Country/label -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Country" class="form-label heading16 labelspacing" id="Country_L">Country:</label>
+                            </div>
+                            <!-- Country/DropDownList -->
+                            <div class="col-lg-8" style="padding-left:8px">
+
+                                <div class="input-group">
+                                    <input class="form-control" type="search" value="" id="recivedGroup">
+                                    <span class="input-group-append">
+                                        <button class="btn btn-outline-secondary bg-white border-bottom-0 border  ms-n5" type="button">
+                                            <i class="fa fa-search"></i>
+                                        </button>
+                                    </span>
+                                </div>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="goverText" class="form-label heading16 labelspacing" id="idNumber_L">City / Governorate :</label>
+                            </div>
+                            <!-- GoverTextBox -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="goverText" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="rowspacing"></div>
+                <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="phone" class="form-label heading16 labelspacing" id="phone_L">Phone Number:</label>
+                            </div>
+                            <!-- phoneTextBox -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="phone" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Email/label -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Email" class="form-label heading16 labelspacing" id="Email_L">Email:</label>
+                            </div>
+                            <!-- EmailTextBox -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="Email" placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="partspacing"></div>
+
+                <!-- label -->
+                <div class="row">
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="dropdowndegree" class="form-label heading16 labelspacing" id="degree_L">Acadmic Degree:</label>
+                            </div>
+
+                            <!-- degree/DropDownList -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdowndegree" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">Diploma</option>
+                                        <option value="2">Bacholer</option>
+                                        <option value="3">Master</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Faculty/label -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="dropdownFaculty" class="form-label heading16 labelspacing" id="Nationality_L">Faculty:</label>
+                            </div>
+                            <!-- Faculty/DropDownList -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdownFaculty" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">Nursing</option>
+                                        <option value="2">Engineering</option>
+                                        <option value="3">Law</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rowspacing"></div>
+
+
+                <div class="row">
+                    <!-- Program/label -->
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="Program" class="form-label heading16 labelspacing" id="Country_L">Program:</label>
+                            </div>
+                            <!-- Program/DropDownList -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <div style="position: relative;  width: 100%;">
+                                    <select class="form-select heading15" id="dropdownProgram" style="width: 100%; padding-right: 30px; background-image:none !important">
+                                        <option value="0" selected></option>
+                                        <option value="1">Communications and Computer Engineering</option>
+                                        <option value="2">Electrical Engineering</option>
+                                        <option value="3">Civil Engineering</option>
+                                    </select>
+                                    <i class="fa-solid fa-caret-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="row g-0">
+                            <div class="col-lg-4">
+                                <label for="SemesterText" class="form-label heading16 labelspacing" id="idNumber_L">Current Semester:</label>
+                            </div>
+                            <!-- SemesterTextBox -->
+                            <div class="col-lg-8" style="padding-left:8px">
+                                <input type="text" class="form-control" id="SemesterText" placeholder="" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="partspacing"></div>
+
+
+            </div>
+            <div class="row">
+                <div class="col-lg-2"></div>
+                <div class="col-lg-8">
+                    <!--save button-->
+                    <div class="btnwrap" style=" ">
+                        <a href="/admission/undergraduate-programs/" class="mybtn heading15" style=" background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important; ">
+                            Update
+                            <span class="line" style="border: 0px;  "></span>
+                            <span class="areaborder" style=" border-top-color: #C81589 !important; border-left-color: #C81589 !important; border-right-color: #C81589 !important; border-bottom-color: #C81589 !important; "></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-2"></div>
+
+
+            </div>
+        </div>
+
+
+
+    </div>
+
+
+    <div class="container-fluid padding margin">
+        <div class="row">
+            <div class="col-lg-12">
+                <h2 class="heading14">Student Code:</h2>
+                <div class="rowspacing"></div>
+                <div class="row">
+                    <div class="col-lg-2"></div>
+                    <!------------------- studentCode/textBox-------------->
+                    <div class="col-lg-8">
+                        <input type="text" class="form-control " id="studentCode" placeholder="" style="border: 3px solid #daa328;" disabled>
+                    </div>
+                    <div class="col-lg-2"></div>
+                </div>
+
+
+            </div>
+        </div>
+        <div class="rowspacing"></div>
+    </div>
+</main>
