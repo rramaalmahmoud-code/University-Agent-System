@@ -379,7 +379,14 @@
                                         <div class="col-lg-8" style="padding-right:8px">
                                             <div class="input-group">
                                                 <!-- Search Input -->
-                                                <input class="form-control" type="search" value="" id="recivedGroup" onkeyup="filterNationality()" placeholder="الدولة ابحث عن...">
+                                                <input class="form-control"
+                                                       type="search"
+                                                       value=""
+                                                       id="recivedGroup"
+                                                       data-list="nationalityOptions"
+                                                       data-target="selectedNationalityId"
+                                                       onkeyup="filterNationality()"
+                                                       placeholder="ابحث عن الجنسية...">
                                                 <input type="hidden" id="selectedNationalityId" asp-for="nationalityId" name="nationalityId" required> <!-- Hidden input to store nationalityId -->
 
                                                 <span class="input-group-append">
@@ -500,7 +507,7 @@
                             </div>
                             </div>
  *@          
-     <div class="row">
+         <div class="row">
                                 <div class="col-lg-4">
                                     <div class="row g-0">
                                         <div class="col-lg-4">
@@ -1099,7 +1106,14 @@
                                     <!-- agent/DropDownList -->
                                     <div class="">
                                         <div class="input-group">
-                                            <input class="form-control" type="search" value="" id="agentSearch" onkeyup="filterAgent()" placeholder="Search Agent...">
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value=""
+                                                   id="agentSearch"
+                                                   data-list="agentOptions"
+                                                   data-target="selectedAgentId"
+                                                   onkeyup="filterAgent()"
+                                                   placeholder="ابحث عن الوكيل...">
 
 
                                             @if (userType == "Admin")
@@ -1620,15 +1634,30 @@
 }
 <script>
     function buildFullName() {
-        document.getElementById("FullArabicName").value =
-            [ArabicFirstName.value, ArabicFatherName.value,
-             ArabicGrandFatherName.value, ArabicFamilyName.value].join(" ");
+        const fullArabicName = document.getElementById("FullArabicName");
+        const fullEnglishName = document.getElementById("FullEnglishName");
+        const getInputValue = id => document.getElementById(id)?.value.trim() || "";
 
-        document.getElementById("FullEnglishName").value =
-            [EnglishFirstName.value, EnglishFatherName.value,
-             EnglishGrandFatherName.value, EnglishFamilyName.value].join(" ");
+        if (fullArabicName) {
+            fullArabicName.value = [
+                getInputValue("ArabicFirstName"),
+                getInputValue("ArabicFatherName"),
+                getInputValue("ArabicGrandFatherName"),
+                getInputValue("ArabicFamilyName")
+            ].filter(Boolean).join(" ");
+        }
+
+        if (fullEnglishName) {
+            fullEnglishName.value = [
+                getInputValue("EnglishFirstName"),
+                getInputValue("EnglishFatherName"),
+                getInputValue("EnglishGrandFatherName"),
+                getInputValue("EnglishFamilyName")
+            ].filter(Boolean).join(" ");
+        }
     }
     document.querySelectorAll("input").forEach(i => i.addEventListener("blur", buildFullName));
+    document.querySelector('form[action="AddStudent"]')?.addEventListener("submit", buildFullName);
 </script>
 
 <script>
@@ -1654,7 +1683,13 @@
 
            document.addEventListener('DOMContentLoaded', function () {
 
-               var agentOptions = document.getElementById('agentOptions');
+               const agentOptions = document.getElementById('agentOptions');
+               const agentSearch = document.getElementById('agentSearch');
+               const selectedAgentId = document.getElementById('selectedAgentId');
+
+               if (!agentOptions || !agentSearch || !selectedAgentId) {
+                   return;
+               }
 
                agentOptions.addEventListener('click', function (event) {
                    if (event.target && event.target.matches('.agent-item')) {
@@ -1662,8 +1697,8 @@
                        var agentId = event.target.getAttribute('data-id');
 
 
-                       document.getElementById('agentSearch').value = agentName;
-                       document.getElementById('selectedAgentId').value = agentId;
+                       agentSearch.value = agentName;
+                       selectedAgentId.value = agentId;
 
 
                        agentOptions.style.display = "none";
@@ -1672,7 +1707,7 @@
 
 
                document.addEventListener('click', function (event) {
-                   var isClickInside = document.getElementById('agentSearch').contains(event.target) ||
+                   const isClickInside = agentSearch.contains(event.target) ||
                                        agentOptions.contains(event.target);
                    if (!isClickInside) {
                        agentOptions.style.display = "none";
@@ -1682,7 +1717,6 @@
 
 
                                   function toggleUploads() {
-                                      debugger
            const transferChecked = document.getElementById("TransferCheckbox").checked;
            const diplomaChecked = document.getElementById("DiplomaCheckbox").checked;
 
@@ -1715,8 +1749,13 @@
        window.onload = toggleUploads;
 
 
-     function filterCountry() {
-        var input = event.target;
+     function filterCountry(event) {
+        const input = event?.target || document.activeElement;
+
+        if (!input || !input.dataset.list) {
+            return;
+        }
+
         var filter = input.value.toUpperCase();
         var listId = input.getAttribute("data-list");
         var list = document.getElementById(listId);
@@ -1732,12 +1771,110 @@
         }
     }
 
+    const bilingualLookupAliases = {
+        countries: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Countries.Select(item => new
+                        {
+                                id = item.countryId,
+                                arabicName = item.countryArabic,
+                                englishName = item.countryEnglish
+                        })
+                )),
+        nationalities: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Nationalities.Select(item => new
+                        {
+                                id = item.nationalityId,
+                                arabicName = item.nationalityArabic,
+                                englishName = item.nationalityEnglish
+                        })
+                )),
+        agents: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Agents.Select(item => new
+                        {
+                                id = item.agentId,
+                                arabicName = item.agentNameArabic,
+                                englishName = item.agentNameEnglish
+                        })
+                ))
+    };
+
+    function normalizeLookupText(value) {
+        return (value || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLocaleLowerCase("ar");
+    }
+
+    function selectExactListMatch(input, showValidationMessage = false) {
+        const list = document.getElementById(input.dataset.list);
+        const hiddenInput = document.getElementById(input.dataset.target);
+
+        if (!list || !hiddenInput) {
+            return true;
+        }
+
+        const typedValue = normalizeLookupText(input.value);
+        const options = Array.from(list.querySelectorAll("li[data-id]"));
+        const exactOption = options.find(option =>
+            normalizeLookupText(option.textContent) === typedValue
+        );
+
+        const aliasGroup = list.id === "nationalityOptions"
+            ? bilingualLookupAliases.nationalities
+            : list.id === "agentOptions"
+                ? bilingualLookupAliases.agents
+                : bilingualLookupAliases.countries;
+
+        const exactAlias = (aliasGroup || []).find(item =>
+            normalizeLookupText(item.arabicName) === typedValue ||
+            normalizeLookupText(item.englishName) === typedValue
+        );
+
+        const matchedId = exactOption?.dataset.id ?? exactAlias?.id;
+
+        if (matchedId !== undefined && matchedId !== null && matchedId !== "") {
+            input.value = input.value.trim();
+            hiddenInput.value = matchedId;
+            input.setCustomValidity("");
+            list.style.display = "none";
+            return true;
+        }
+
+        hiddenInput.value = "";
+
+        if (showValidationMessage) {
+            input.setCustomValidity(
+                typedValue
+                    ? "يرجى إدخال قيمة صحيحة موجودة في القائمة."
+                    : "يرجى اختيار قيمة من القائمة."
+            );
+        } else {
+            input.setCustomValidity("");
+        }
+
+        return false;
+    }
+
         document.addEventListener('DOMContentLoaded', function () {
 
 
         document.querySelectorAll('input[data-list]').forEach(function(input) {
             const listId = input.getAttribute('data-list');
             const list = document.getElementById(listId);
+
+            if (!list) {
+                return;
+            }
+
+            input.addEventListener('input', function () {
+                const hiddenInput = document.getElementById(input.dataset.target);
+
+                if (hiddenInput) {
+                    hiddenInput.value = "";
+                }
+
+                input.setCustomValidity("");
+            });
 
 
             input.addEventListener('keyup', function () {
@@ -1760,18 +1897,45 @@
                 }
             });
 
+            input.addEventListener('blur', function () {
+                window.setTimeout(function () {
+                    selectExactListMatch(input);
+                }, 150);
+            });
+
 
             list.addEventListener('click', function(e) {
-                if (e.target && e.target.matches('li.country-item')) {
+                const selectedItem = e.target.closest('li[data-id]');
+
+                if (selectedItem && list.contains(selectedItem)) {
                     e.stopPropagation();
-                    input.value = e.target.innerText;
+                    input.value = selectedItem.textContent.trim();
                     const hiddenInputId = input.getAttribute('data-target');
                     if (hiddenInputId) {
-                        document.getElementById(hiddenInputId).value = e.target.getAttribute('data-id');
+                        document.getElementById(hiddenInputId).value = selectedItem.getAttribute('data-id');
                     }
+                    input.setCustomValidity("");
                     list.style.display = 'none';
                 }
             });
+        });
+
+        const addStudentForm = document.querySelector('form[action="AddStudent"]');
+
+        addStudentForm?.addEventListener('submit', function (event) {
+            const visibleSearchInputs = Array.from(
+                addStudentForm.querySelectorAll('input[data-list][data-target]')
+            ).filter(input => input.offsetParent !== null);
+
+            const invalidInput = visibleSearchInputs.find(input =>
+                !selectExactListMatch(input, true)
+            );
+
+            if (invalidInput) {
+                event.preventDefault();
+                invalidInput.reportValidity();
+                invalidInput.focus();
+            }
         });
 
 

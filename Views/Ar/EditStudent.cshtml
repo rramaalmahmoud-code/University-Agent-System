@@ -76,7 +76,7 @@
                     </dikv>
                 </div>
             </div>
-            <form asp-controller="Ar" asp-action="EditStudent" method="post" enctype="multipart/form-data">
+            <form id="editStudentForm" asp-controller="Ar" asp-action="EditStudent" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
 
                 <input type="hidden" name="studentId" value="@Model.studentId" />
@@ -93,7 +93,7 @@
                                         <label for="discount" class="form-label heading16 labelspacing">الرقم الجامعي</label>
                                     </div>
                                     <div class="col-lg-8" style="padding-right:8px">
-                                        <input type="text" asp-for="studentNumber" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" />
+                                        <input type="text" asp-for="studentNumber" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" data-val="false" />
                                     </div>
                                 </div>
                             </div>
@@ -103,7 +103,7 @@
                                         <label for="discount" class="form-label heading16 labelspacing">كلمة السر</label>
                                     </div>
                                     <div class="col-lg-8" style="padding-right:8px">
-                                        <input type="text" class="form-control" asp-for="Password" id="Password" name="Password" value="@Model.Password" />
+                                        <input type="text" class="form-control" asp-for="Password" id="Password" name="Password" value="@Model.Password" data-val="false" />
                                     </div>
                                 </div>
                             </div>
@@ -414,7 +414,14 @@
                                     <div class="col-lg-8" style="padding-right:8px">
                                         <div class="input-group">
                                             <!-- Search Input -->
-                                            <input class="form-control" type="search" value="@selectedNationality" id="recivedGroup" onkeyup="filterNationality()" placeholder="الدولة ابحث عن..." />
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value="@selectedNationality"
+                                                   id="recivedGroup"
+                                                   data-list="nationalityOptions"
+                                                   data-target="selectedNationalityId"
+                                                   onkeyup="filterNationality()"
+                                                   placeholder="ابحث عن الجنسية..." />
 
                                             <input type="hidden" asp-for="nationalityId" id="selectedNationalityId" value="@Model.nationalityId" name="nationalityId"> <!-- Hidden input to store nationalityId -->
 
@@ -1055,7 +1062,14 @@
                                 <!-- agent/DropDownList -->
                                 <div class="">
                                     <div class="input-group">
-                                        <input class="form-control" type="search" value="@selectedAgent" id="agentSearch" onkeyup="filterAgent()" placeholder="Search Agent...">
+                                        <input class="form-control"
+                                               type="search"
+                                               value="@selectedAgent"
+                                               id="agentSearch"
+                                               data-list="agentOptions"
+                                               data-target="selectedAgentId"
+                                               onkeyup="filterAgent()"
+                                               placeholder="ابحث عن الوكيل...">
                                         @*        <input type="hidden" id="selectedAgentId" name="agentId"> <!-- Hidden input to store agentId --> *@
 
                                         @if (userType == "Admin")
@@ -1551,408 +1565,569 @@
     }
     document.querySelectorAll("input").forEach(i => i.addEventListener("blur", buildFullName));
 </script>
-@section Scripts {
-    <script>
-               function filterAgent() {
 
-                   var input = document.getElementById('agentSearch');
-                   var filter = input.value.toUpperCase();
-                   var list = document.getElementById('agentOptions');
-                   var items = list.getElementsByTagName('li');
+<script>
+           function filterAgent() {
 
-
-                   list.style.display = input.value.length > 0 ? "block" : "none";
+               var input = document.getElementById('agentSearch');
+               var filter = input.value.toUpperCase();
+               var list = document.getElementById('agentOptions');
+               var items = list.getElementsByTagName('li');
 
 
-                   for (var i = 0; i < items.length; i++) {
-                       var txtValue = items[i].textContent || items[i].innerText;
-                       items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-                   }
+               list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+               for (var i = 0; i < items.length; i++) {
+                   var txtValue = items[i].textContent || items[i].innerText;
+                   items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+               }
+           }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+
+               const agentOptions = document.getElementById('agentOptions');
+               const agentSearch = document.getElementById('agentSearch');
+               const selectedAgentId = document.getElementById('selectedAgentId');
+
+               if (!agentOptions || !agentSearch || !selectedAgentId) {
+                   return;
                }
 
-
-               document.addEventListener('DOMContentLoaded', function () {
-
-                   var agentOptions = document.getElementById('agentOptions');
-
-                   agentOptions.addEventListener('click', function (event) {
-                       if (event.target && event.target.matches('.agent-item')) {
-                           var agentName = event.target.innerText;
-                           var agentId = event.target.getAttribute('data-id');
+               agentOptions.addEventListener('click', function (event) {
+                   if (event.target && event.target.matches('.agent-item')) {
+                       var agentName = event.target.innerText;
+                       var agentId = event.target.getAttribute('data-id');
 
 
-                           document.getElementById('agentSearch').value = agentName;
-                           document.getElementById('selectedAgentId').value = agentId;
+                       agentSearch.value = agentName;
+                       selectedAgentId.value = agentId;
 
 
-                           agentOptions.style.display = "none";
-                       }
-                   });
-
-
-                   document.addEventListener('click', function (event) {
-                       var isClickInside = document.getElementById('agentSearch').contains(event.target) ||
-                                           agentOptions.contains(event.target);
-                       if (!isClickInside) {
-                           agentOptions.style.display = "none";
-                       }
-                   });
+                       agentOptions.style.display = "none";
+                   }
                });
 
 
-                                      function toggleUploads() {
-               const transferChecked = document.getElementById("TransferCheckbox").checked;
-               const diplomaChecked = document.getElementById("DiplomaCheckbox").checked;
-
-               const transferDiv = document.getElementById("transferUploadDiv");
-               const diplomaDiv = document.getElementById("diplomaUploadDiv");
-
-               const transferInput = document.getElementById("transferReport");
-               const diplomaInput = document.getElementById("diplomaReport");
-
-
-               if (transferChecked) {
-                   transferDiv.style.display = "block";
-                   transferInput.setAttribute("required", "required");
-               } else {
-                   transferDiv.style.display = "none";
-                   transferInput.removeAttribute("required");
-               }
-
-
-               if (diplomaChecked) {
-                   diplomaDiv.style.display = "block";
-                   diplomaInput.setAttribute("required", "required");
-               } else {
-                   diplomaDiv.style.display = "none";
-                   diplomaInput.removeAttribute("required");
-               }
-           }
-
-
-           window.onload = toggleUploads;
-
-
-         function filterCountry() {
-            var input = event.target;
-            var filter = input.value.toUpperCase();
-            var listId = input.getAttribute("data-list");
-            var list = document.getElementById(listId);
-            var items = list.getElementsByTagName('li');
-
-
-            list.style.display = input.value.length > 0 ? "block" : "none";
-
-
-            for (var i = 0; i < items.length; i++) {
-                var txtValue = items[i].textContent || items[i].innerText;
-                items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-            }
-        }
-
-            document.addEventListener('DOMContentLoaded', function () {
-
-
-            document.querySelectorAll('input[data-list]').forEach(function(input) {
-                const listId = input.getAttribute('data-list');
-                const list = document.getElementById(listId);
-
-
-                input.addEventListener('keyup', function () {
-                    const filter = input.value.toUpperCase();
-                    const items = list.getElementsByTagName('li');
-
-                    list.style.display = input.value.length > 0 ? 'block' : 'none';
-
-                    for (let i = 0; i < items.length; i++) {
-                        const txtValue = items[i].textContent || items[i].innerText;
-                        items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
-                    }
-                });
-
-
-                input.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (input.value.length > 0) {
-                        list.style.display = 'block';
-                    }
-                });
-
-
-                list.addEventListener('click', function(e) {
-                    if (e.target && e.target.matches('li.country-item')) {
-                        e.stopPropagation();
-                        input.value = e.target.innerText;
-                        const hiddenInputId = input.getAttribute('data-target');
-                        if (hiddenInputId) {
-                            document.getElementById(hiddenInputId).value = e.target.getAttribute('data-id');
-                        }
-                        list.style.display = 'none';
-                    }
-                });
-            });
-
-
-            document.addEventListener('click', function () {
-                document.querySelectorAll('ul.list-group').forEach(function(list) {
-                    list.style.display = 'none';
-                });
-            });
-        });
-
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const degreeDropdown = document.getElementById("dropdownDegree");
-            const facultyDropdown = document.getElementById("dropdownFaculty");
-            const programDropdown = document.getElementById("dropdownProgram");
-            const selectedDegreeInput = document.getElementById("selectedDegreeId");
-            const selectedFacultyInput = document.getElementById("selectedFacultyId");
-            const selectedAdmissionMajorInput = document.getElementById("selectedAdmissionMajorId");
-            const selectedProgramInput = document.getElementById("selectedProgramId");
-            const discountInput = document.getElementById("discount");
-            const discountHiddenInput = document.getElementById("discountHidden");
-            const semesterInput = document.querySelector('input[name="semesterId"]');
-            const getMajorsUrl = programDropdown.dataset.getMajorsUrl;
-
-            if (!degreeDropdown || !facultyDropdown || !programDropdown ||
-                !selectedDegreeInput || !selectedFacultyInput ||
-                !selectedAdmissionMajorInput || !selectedProgramInput ||
-                !discountInput || !semesterInput || !getMajorsUrl) {
-                return;
-            }
-
-            const getValue = (item, ...keys) => {
-                for (const key of keys) {
-                    if (item[key] !== undefined && item[key] !== null) {
-                        return item[key];
-                    }
-                }
-
-                return null;
-            };
-
-            const clearMajor = () => {
-                programDropdown.innerHTML = '<option value="">اختر البرنامج</option>';
-                selectedAdmissionMajorInput.value = "";
-                selectedProgramInput.value = "";
-                discountInput.value = "";
-
-                if (discountHiddenInput) {
-                    discountHiddenInput.value = "";
-                }
-            };
-
-            const applySelectedMajor = () => {
-                const selectedOption = programDropdown.options[programDropdown.selectedIndex];
-                const hasSelection = selectedOption && programDropdown.value !== "";
-                const discount = hasSelection
-                    ? (selectedOption.dataset.discountPercentage || "0")
-                    : "";
-
-                selectedAdmissionMajorInput.value = hasSelection
-                    ? programDropdown.value
-                    : "";
-
-
-                selectedProgramInput.value = hasSelection
-                    ? (selectedOption.dataset.oracleMajorNo || "")
-                    : "";
-
-                discountInput.value = discount;
-
-                if (discountHiddenInput) {
-                    discountHiddenInput.value = discount;
-                }
-            };
-
-            const loadMajors = async (selectedAdmissionMajorId = "") => {
-                clearMajor();
-
-                selectedDegreeInput.value = degreeDropdown.value === "0"
-                    ? ""
-                    : degreeDropdown.value;
-
-                selectedFacultyInput.value = facultyDropdown.value === "0"
-                    ? ""
-                    : facultyDropdown.value;
-
-                if (!selectedDegreeInput.value ||
-                    !selectedFacultyInput.value ||
-                    !semesterInput.value) {
-                    return;
-                }
-
-                programDropdown.disabled = true;
-
-                try {
-                    const query = new URLSearchParams({
-                        facultyNo: selectedFacultyInput.value,
-                        degreeId: selectedDegreeInput.value,
-                        semesterId: semesterInput.value
-                    });
-
-                    if (selectedAdmissionMajorId) {
-                        query.set("selectedAdmissionMajorId", selectedAdmissionMajorId);
-                    }
-
-                    const response = await fetch(`${getMajorsUrl}?${query}`, {
-                        headers: { "Accept": "application/json" }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error("تعذر تحميل البرامج");
-                    }
-
-                    const responseBody = await response.json();
-                    const majors = Array.isArray(responseBody)
-                        ? responseBody
-                        : (responseBody.data || []);
-
-                    majors.forEach(major => {
-                        const admissionMajorId = getValue(
-                            major,
-                            "admissionMajorId",
-                            "AdmissionMajorId"
-                        );
-
-                        if (admissionMajorId === null) {
-                            return;
-                        }
-
-                        const option = document.createElement("option");
-                        option.value = admissionMajorId;
-                        option.textContent = getValue(
-                            major,
-                            "majorNameArabic",
-                            "MajorNameArabic",
-                            "majorNameAr",
-                            "MajorNameAr",
-                            "displayName",
-                            "DisplayName",
-                            "majorName",
-                            "MajorName"
-                        ) || "";
-
-                        option.dataset.oracleMajorNo = getValue(
-                            major,
-                            "oracleMajorNo",
-                            "OracleMajorNo",
-                            "majorNo",
-                            "MajorNo"
-                        ) || "";
-
-                        option.dataset.discountPercentage = getValue(
-                            major,
-                            "discountPercentage",
-                            "DiscountPercentage",
-                            "discount",
-                            "Discount"
-                        ) ?? 0;
-
-                        option.selected = String(admissionMajorId) ===
-                            String(selectedAdmissionMajorId);
-
-                        programDropdown.appendChild(option);
-                    });
-
-                    applySelectedMajor();
-                }
-                catch (error) {
-                    clearMajor();
-                    console.error(error);
-                }
-                finally {
-                    programDropdown.disabled = false;
-                }
-            };
-
-            programDropdown.addEventListener("change", applySelectedMajor);
-            degreeDropdown.addEventListener("change", () => loadMajors());
-            facultyDropdown.addEventListener("change", () => loadMajors());
-
-            const initiallySelectedMajor =
-                programDropdown.dataset.selected ||
-                selectedAdmissionMajorInput.value ||
-                "";
-
-            loadMajors(initiallySelectedMajor);
-        });
-
-
-            function filterNationality() {
-                                   var input, filter, list, items, i, txtValue;
-                                   input = document.getElementById('recivedGroup');
-                                   filter = input.value.toUpperCase();
-                                   list = document.getElementById('nationalityOptions');
-                                   items = list.getElementsByTagName('li');
-
-
-                                   if (input.value.length > 0) {
-                                       list.style.display = "block";
-                                   } else {
-                                       list.style.display = "none";
-                                   }
-
-
-                                   for (i = 0; i < items.length; i++) {
-                                       txtValue = items[i].textContent || items[i].innerText;
-                                       if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                                           items[i].style.display = "";
-                                       } else {
-                                           items[i].style.display = "none";
-                                       }
-                                   }
-                               }
-
-
-                               document.querySelectorAll('.nationality-item').forEach(function(item) {
-                                   item.addEventListener('click', function() {
-                                       var nationalityName = item.innerText;
-                                       var nationalityId = item.getAttribute('data-id');
-
-
-                                       document.getElementById('recivedGroup').value = nationalityName;
-
-
-                                       document.getElementById('selectedNationalityId').value = nationalityId;
-
-
-                                       document.getElementById('nationalityOptions').style.display = "none";
-                                   });
-                               });
-
-
-               document.getElementById("dropdownDegree").addEventListener("change", function () {
-               const selectedDegreeId = parseInt(this.value);
-               document.getElementById("selectedDegreeId").value = selectedDegreeId;
+               document.addEventListener('click', function (event) {
+                   const isClickInside = agentSearch.contains(event.target) ||
+                                       agentOptions.contains(event.target);
+                   if (!isClickInside) {
+                       agentOptions.style.display = "none";
+                   }
+               });
            });
 
 
-            function setGenderValue(selectElement) {
-               document.getElementById("studentGender").value = selectElement.value;
+       function toggleUploads() {
+           const transferCheckbox = document.getElementById("TransferCheckbox");
+           const diplomaCheckbox = document.getElementById("DiplomaCheckbox");
+           const transferDiv = document.getElementById("transferUploadDiv");
+           const diplomaDiv = document.getElementById("diplomaUploadDiv");
+           const transferInput = document.getElementById("transferReport");
+           const diplomaInput = document.getElementById("diplomaReportInput");
+           const existingTransferPath = document.querySelector(
+               'input[name="studentGrades_ReportPath"]'
+           )?.value.trim();
+           const existingDiplomaPath = document.querySelector(
+               'input[name="studentGrades_ReportPath1"]'
+           )?.value.trim();
+
+           if (transferCheckbox && transferDiv) {
+               transferDiv.style.display = transferCheckbox.checked
+                   ? "block"
+                   : "none";
            }
 
+           if (transferInput && transferCheckbox) {
+               transferInput.required =
+                   transferCheckbox.checked && !existingTransferPath;
+           }
 
-               document.addEventListener('DOMContentLoaded', function () {
-                      const dropdown = document.getElementById('dropdownDegree');
-                  const certDiv = document.getElementById('bachelorCertDiv');
+           if (diplomaCheckbox && diplomaDiv) {
+               diplomaDiv.style.display = diplomaCheckbox.checked
+                   ? "block"
+                   : "none";
+           }
 
-                  const masterKeyword = "ماجستير";
+           if (diplomaInput && diplomaCheckbox) {
+               diplomaInput.required =
+                   diplomaCheckbox.checked && !existingDiplomaPath;
+           }
+       }
 
-                  function updateCertificateVisibility() {
-                      const selectedText = dropdown.options[dropdown.selectedIndex].text.toLowerCase();
-                      if (selectedText.includes(masterKeyword)) {
-                          certDiv.style.display = "block";
-                      } else {
-                          certDiv.style.display = "none";
-                      }
+       if (document.readyState === "loading") {
+           document.addEventListener("DOMContentLoaded", toggleUploads);
+       } else {
+           toggleUploads();
+       }
+
+
+     const bilingualLookupAliases = {
+         countries: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Countries.Select(item => new
+                          {
+                                  id = item.countryId,
+                                  arabicName = item.countryArabic,
+                                  englishName = item.countryEnglish
+                          })
+                  )),
+         nationalities: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Nationalities.Select(item => new
+                          {
+                                  id = item.nationalityId,
+                                  arabicName = item.nationalityArabic,
+                                  englishName = item.nationalityEnglish
+                          })
+                  )),
+         agents: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Agents.Select(item => new
+                          {
+                                  id = item.agentId,
+                                  arabicName = item.agentNameArabic,
+                                  englishName = item.agentNameEnglish
+                          })
+                  ))
+     };
+
+     function normalizeLookupText(value) {
+         return (value || "")
+             .trim()
+             .replace(/\s+/g, " ")
+             .toLocaleLowerCase("ar");
+     }
+
+     function getLookupAliasGroup(listId) {
+         if (listId === "nationalityOptions") {
+             return bilingualLookupAliases.nationalities;
+         }
+
+         if (listId === "agentOptions") {
+             return bilingualLookupAliases.agents;
+         }
+
+         return bilingualLookupAliases.countries;
+     }
+
+     function lookupOptionMatches(option, typedText, listId) {
+         const normalizedFilter = normalizeLookupText(typedText);
+         const alias = (getLookupAliasGroup(listId) || []).find(item =>
+             String(item.id) === String(option.dataset.id)
+         );
+
+         return [
+             option.textContent,
+             alias?.arabicName,
+             alias?.englishName
+         ].some(value =>
+             normalizeLookupText(value).includes(normalizedFilter)
+         );
+     }
+
+     function selectExactListMatch(input, showValidationMessage = false) {
+         const list = document.getElementById(input.dataset.list);
+         const hiddenInput = document.getElementById(input.dataset.target);
+
+         if (!list || !hiddenInput) {
+             return true;
+         }
+
+         const typedValue = normalizeLookupText(input.value);
+         const options = Array.from(list.querySelectorAll("li[data-id]"));
+         const exactOption = options.find(option =>
+             normalizeLookupText(option.textContent) === typedValue
+         );
+         const exactAlias = (getLookupAliasGroup(list.id) || []).find(item =>
+             normalizeLookupText(item.arabicName) === typedValue ||
+             normalizeLookupText(item.englishName) === typedValue
+         );
+         const matchedId = exactOption?.dataset.id ?? exactAlias?.id;
+
+         if (matchedId !== undefined && matchedId !== null && matchedId !== "") {
+             input.value = input.value.trim();
+             hiddenInput.value = matchedId;
+             input.setCustomValidity("");
+             list.style.display = "none";
+             return true;
+         }
+
+         hiddenInput.value = "";
+         input.setCustomValidity(showValidationMessage
+             ? (typedValue
+                 ? "يرجى إدخال قيمة صحيحة موجودة في القائمة."
+                 : "يرجى اختيار قيمة من القائمة.")
+             : "");
+         return false;
+     }
+
+     function filterCountry(event) {
+        const input = event?.target || document.activeElement;
+
+        if (!input || !input.dataset.list) {
+            return;
+        }
+
+        var filter = input.value.toUpperCase();
+        var listId = input.getAttribute("data-list");
+        var list = document.getElementById(listId);
+        var items = list.getElementsByTagName('li');
+
+
+        list.style.display = input.value.length > 0 ? "block" : "none";
+
+
+        for (var i = 0; i < items.length; i++) {
+            var txtValue = items[i].textContent || items[i].innerText;
+            items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+        document.querySelectorAll('input[data-list]').forEach(function(input) {
+        const listId = input.getAttribute('data-list');
+        const list = document.getElementById(listId);
+
+        if (!list) {
+            return;
+        }
+
+        input.addEventListener('input', function () {
+            const hiddenInput = document.getElementById(input.dataset.target);
+
+            if (hiddenInput) {
+                hiddenInput.value = "";
+            }
+
+            input.setCustomValidity("");
+        });
+
+
+            input.addEventListener('keyup', function () {
+                const items = list.getElementsByTagName('li');
+
+                list.style.display = input.value.length > 0 ? 'block' : 'none';
+
+                for (let i = 0; i < items.length; i++) {
+                    items[i].style.display = lookupOptionMatches(
+                        items[i],
+                        input.value,
+                        listId
+                    ) ? '' : 'none';
+                }
+            });
+
+
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (input.value.length > 0) {
+                    list.style.display = 'block';
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                window.setTimeout(function () {
+                    selectExactListMatch(input);
+                }, 150);
+            });
+
+
+            list.addEventListener('click', function(e) {
+                const selectedItem = e.target.closest('li[data-id]');
+
+                if (selectedItem && list.contains(selectedItem)) {
+                    e.stopPropagation();
+                    input.value = selectedItem.textContent.trim();
+                    const hiddenInputId = input.getAttribute('data-target');
+                    if (hiddenInputId) {
+                        document.getElementById(hiddenInputId).value = selectedItem.getAttribute('data-id');
+                    }
+                    input.setCustomValidity("");
+                    list.style.display = 'none';
+                }
+            });
+        });
+
+        const editStudentForm = document.getElementById('editStudentForm');
+
+        editStudentForm?.addEventListener('submit', function (event) {
+            const visibleSearchInputs = Array.from(
+                editStudentForm.querySelectorAll('input[data-list][data-target]')
+            ).filter(input => input.offsetParent !== null);
+
+            const invalidInput = visibleSearchInputs.find(input =>
+                !selectExactListMatch(input, true)
+            );
+
+            if (invalidInput) {
+                event.preventDefault();
+                invalidInput.reportValidity();
+                invalidInput.focus();
+            }
+        });
+
+
+        document.addEventListener('click', function () {
+            document.querySelectorAll('ul.list-group').forEach(function(list) {
+                list.style.display = 'none';
+            });
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const degreeDropdown = document.getElementById("dropdownDegree");
+        const facultyDropdown = document.getElementById("dropdownFaculty");
+        const programDropdown = document.getElementById("dropdownProgram");
+        const selectedDegreeInput = document.getElementById("selectedDegreeId");
+        const selectedFacultyInput = document.getElementById("selectedFacultyId");
+        const selectedAdmissionMajorInput = document.getElementById("selectedAdmissionMajorId");
+        const selectedProgramInput = document.getElementById("selectedProgramId");
+        const discountInput = document.getElementById("discount");
+        const discountHiddenInput = document.getElementById("discountHidden");
+        const semesterInput = document.querySelector('input[name="semesterId"]');
+        const getMajorsUrl = programDropdown.dataset.getMajorsUrl;
+
+        if (!degreeDropdown || !facultyDropdown || !programDropdown ||
+            !selectedDegreeInput || !selectedFacultyInput ||
+            !selectedAdmissionMajorInput || !selectedProgramInput ||
+            !discountInput || !semesterInput || !getMajorsUrl) {
+            return;
+        }
+
+        const getValue = (item, ...keys) => {
+            for (const key of keys) {
+                if (item[key] !== undefined && item[key] !== null) {
+                    return item[key];
+                }
+            }
+
+            return null;
+        };
+
+        const clearMajor = () => {
+            programDropdown.innerHTML = '<option value="">اختر البرنامج</option>';
+            selectedAdmissionMajorInput.value = "";
+            selectedProgramInput.value = "";
+            discountInput.value = "";
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = "";
+            }
+        };
+
+        const applySelectedMajor = () => {
+            const selectedOption = programDropdown.options[programDropdown.selectedIndex];
+            const hasSelection = selectedOption && programDropdown.value !== "";
+            const discount = hasSelection
+                ? (selectedOption.dataset.discountPercentage || "0")
+                : "";
+
+            selectedAdmissionMajorInput.value = hasSelection
+                ? programDropdown.value
+                : "";
+
+
+            selectedProgramInput.value = hasSelection
+                ? (selectedOption.dataset.oracleMajorNo || "")
+                : "";
+
+            discountInput.value = discount;
+
+            if (discountHiddenInput) {
+                discountHiddenInput.value = discount;
+            }
+        };
+
+        const loadMajors = async (selectedAdmissionMajorId = "") => {
+            clearMajor();
+
+            selectedDegreeInput.value = degreeDropdown.value === "0"
+                ? ""
+                : degreeDropdown.value;
+
+            selectedFacultyInput.value = facultyDropdown.value === "0"
+                ? ""
+                : facultyDropdown.value;
+
+            if (!selectedDegreeInput.value ||
+                !selectedFacultyInput.value ||
+                !semesterInput.value) {
+                return;
+            }
+
+            programDropdown.disabled = true;
+
+            try {
+                const query = new URLSearchParams({
+                    facultyNo: selectedFacultyInput.value,
+                    degreeId: selectedDegreeInput.value,
+                    semesterId: semesterInput.value
+                });
+
+                if (selectedAdmissionMajorId) {
+                    query.set("selectedAdmissionMajorId", selectedAdmissionMajorId);
+                }
+
+                const response = await fetch(`${getMajorsUrl}?${query}`, {
+                    headers: { "Accept": "application/json" }
+                });
+
+                if (!response.ok) {
+                    throw new Error("تعذر تحميل البرامج");
+                }
+
+                const responseBody = await response.json();
+                const majors = Array.isArray(responseBody)
+                    ? responseBody
+                    : (responseBody.data || []);
+
+                majors.forEach(major => {
+                    const admissionMajorId = getValue(
+                        major,
+                        "admissionMajorId",
+                        "AdmissionMajorId"
+                    );
+
+                    if (admissionMajorId === null) {
+                        return;
+                    }
+
+                    const option = document.createElement("option");
+                    option.value = admissionMajorId;
+                    option.textContent = getValue(
+                        major,
+                        "majorNameArabic",
+                        "MajorNameArabic",
+                        "majorNameAr",
+                        "MajorNameAr",
+                        "displayName",
+                        "DisplayName",
+                        "majorName",
+                        "MajorName"
+                    ) || "";
+
+                    option.dataset.oracleMajorNo = getValue(
+                        major,
+                        "oracleMajorNo",
+                        "OracleMajorNo",
+                        "majorNo",
+                        "MajorNo"
+                    ) || "";
+
+                    option.dataset.discountPercentage = getValue(
+                        major,
+                        "discountPercentage",
+                        "DiscountPercentage",
+                        "discount",
+                        "Discount"
+                    ) ?? 0;
+
+                    option.selected = String(admissionMajorId) ===
+                        String(selectedAdmissionMajorId);
+
+                    programDropdown.appendChild(option);
+                });
+
+                applySelectedMajor();
+            }
+            catch (error) {
+                clearMajor();
+                console.error(error);
+            }
+            finally {
+                programDropdown.disabled = false;
+            }
+        };
+
+        programDropdown.addEventListener("change", applySelectedMajor);
+        degreeDropdown.addEventListener("change", () => loadMajors());
+        facultyDropdown.addEventListener("change", () => loadMajors());
+
+        const initiallySelectedMajor =
+            programDropdown.dataset.selected ||
+            selectedAdmissionMajorInput.value ||
+            "";
+
+        loadMajors(initiallySelectedMajor);
+    });
+
+
+        function filterNationality() {
+                               var input, filter, list, items, i, txtValue;
+                               input = document.getElementById('recivedGroup');
+                               filter = input.value.toUpperCase();
+                               list = document.getElementById('nationalityOptions');
+                               items = list.getElementsByTagName('li');
+
+
+                               if (input.value.length > 0) {
+                                   list.style.display = "block";
+                               } else {
+                                   list.style.display = "none";
+                               }
+
+
+                               for (i = 0; i < items.length; i++) {
+                                   txtValue = items[i].textContent || items[i].innerText;
+                                   if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                       items[i].style.display = "";
+                                   } else {
+                                       items[i].style.display = "none";
+                                   }
+                               }
+                           }
+
+
+                           document.querySelectorAll('.nationality-item').forEach(function(item) {
+                               item.addEventListener('click', function() {
+                                   var nationalityName = item.innerText;
+                                   var nationalityId = item.getAttribute('data-id');
+
+
+                                   document.getElementById('recivedGroup').value = nationalityName;
+
+
+                                   document.getElementById('selectedNationalityId').value = nationalityId;
+
+
+                                   document.getElementById('nationalityOptions').style.display = "none";
+                               });
+                           });
+
+
+           document.getElementById("dropdownDegree").addEventListener("change", function () {
+           const selectedDegreeId = parseInt(this.value);
+           document.getElementById("selectedDegreeId").value = selectedDegreeId;
+       });
+
+
+        function setGenderValue(selectElement) {
+           document.getElementById("studentGender").value = selectElement.value;
+       }
+
+
+           document.addEventListener('DOMContentLoaded', function () {
+                  const dropdown = document.getElementById('dropdownDegree');
+              const certDiv = document.getElementById('bachelorCertDiv');
+
+              const masterKeyword = "ماجستير";
+
+              function updateCertificateVisibility() {
+                  const selectedText = dropdown.options[dropdown.selectedIndex].text.toLowerCase();
+                  if (selectedText.includes(masterKeyword)) {
+                      certDiv.style.display = "block";
+                  } else {
+                      certDiv.style.display = "none";
                   }
+              }
 
 
-                  updateCertificateVisibility();
+              updateCertificateVisibility();
 
 
-                  dropdown.addEventListener('change', updateCertificateVisibility);
-              });
-    </script>
-}
+              dropdown.addEventListener('change', updateCertificateVisibility);
+          });
+</script>

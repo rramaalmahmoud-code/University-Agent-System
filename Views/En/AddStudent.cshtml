@@ -352,7 +352,13 @@
                                         </div>
                                         <div class="col-lg-8" style="padding-left:8px">
                                             <div class="input-group">
-                                                <input class="form-control" type="search" id="recivedGroup" onkeyup="filterNationality()" placeholder="Search country...">
+                                                <input class="form-control"
+                                                       type="search"
+                                                       id="recivedGroup"
+                                                       data-list="nationalityOptions"
+                                                       data-target="selectedNationalityId"
+                                                       onkeyup="filterNationality()"
+                                                       placeholder="Search nationality...">
                                                 <input type="hidden" id="selectedNationalityId" asp-for="nationalityId" name="nationalityId" required>
                                                 <span class="input-group-append">
                                                     <button class="btn btn-outline-secondary bg-white border-bottom-0 border ms-n5" type="button">
@@ -415,7 +421,7 @@
                                                        id="countrySearch0"
                                                        data-list="countryOptions0"
                                                        data-target="selectedCountryId0"
-                                                       onkeyup="filterCountry()"
+                                                       onkeyup="filterCountry(event)"
                                                        placeholder="Search for a country..." />
 
                                                 <input type="hidden"
@@ -603,7 +609,7 @@
                                                        id="countrySearch"
                                                        data-list="countryOptions"
                                                        data-target="selectedCountryId"
-                                                       onkeyup="filterCountry()"
+                                                       onkeyup="filterCountry(event)"
                                                        placeholder="Search for a country..." />
 
                                                 <input type="hidden"
@@ -768,7 +774,7 @@
                                                        id="countrySearch3"
                                                        data-list="countryOptions3"
                                                        data-target="selectedCountryId3"
-                                                       onkeyup="filterCountry()"
+                                                       onkeyup="filterCountry(event)"
                                                        placeholder="Search for a country..." />
 
                                                 <input type="hidden"
@@ -960,6 +966,8 @@
                                                    type="search"
                                                    value=""
                                                    id="agentSearch"
+                                                   data-list="agentOptions"
+                                                   data-target="selectedAgentId"
                                                    onkeyup="filterAgent()"
                                                    placeholder="Search Agent..." />
 
@@ -993,7 +1001,7 @@
                                             @foreach (var agent in Model.Agents)
                                             {
                                                 <li class="list-group-item agent-item" data-id="@agent.agentId">
-                                                    @agent.agentNameArabic
+                                                    @agent.agentNameEnglish
                                                 </li>
                                             }
                                         </ul>
@@ -1029,7 +1037,7 @@
                                        name="isDiploma"
                                        onchange="toggleUploads()"
                                        value="1" />
-                                <label class="form-check-label heading16" for="Diploma">
+                                <label class="form-check-label heading16" for="DiplomaCheckbox">
                                     Diploma
                                 </label>
                             </div>
@@ -1064,7 +1072,7 @@
                                                    data-list="diplomaCountryOptions"
                                                    data-target="diplomaCountryId"
                                                    placeholder="Search for a country..."
-                                                   onkeyup="filterCountry()">
+                                                   onkeyup="filterCountry(event)">
 
                                             <input type="hidden"
                                                    asp-for="countryId1"
@@ -1178,7 +1186,7 @@
                                                    data-list="countryOptions2"
                                                    data-target="selectedCountryId2"
                                                    placeholder="Search for a country..."
-                                                   onkeyup="filterCountry()">
+                                                   onkeyup="filterCountry(event)">
                                             <input type="hidden"
                                                    asp-for="countryId2"
                                                    id="selectedCountryId2"
@@ -1379,7 +1387,7 @@
                     <div class="row">
                         <div class="col-lg-2"></div>
                         <div class="col-lg-8">
-                            <!-- زر حفظ -->
+                            <!-- Save button -->
                             <div class="btnwrap" style=" ">
                                 <button type="submit" class="mybtn heading15" style="background-color: #C81589; padding-left: 25% !important; padding-right: 25% !important;border:none;">
                                     Save
@@ -1900,7 +1908,7 @@
 
             </form>
  *@          
-     <div class="rowspacing"></div>
+         <div class="rowspacing"></div>
 
             </div>
 
@@ -1936,15 +1944,30 @@
 }
 <script>
     function buildFullName() {
-        document.getElementById("FullArabicName").value =
-            [ArabicFirstName.value, ArabicFatherName.value,
-             ArabicGrandFatherName.value, ArabicFamilyName.value].join(" ");
+        const fullArabicName = document.getElementById("FullArabicName");
+        const fullEnglishName = document.getElementById("FullEnglishName");
+        const getInputValue = id => document.getElementById(id)?.value.trim() || "";
 
-        document.getElementById("FullEnglishName").value =
-            [EnglishFirstName.value, EnglishFatherName.value,
-             EnglishGrandFatherName.value, EnglishFamilyName.value].join(" ");
+        if (fullArabicName) {
+            fullArabicName.value = [
+                getInputValue("ArabicFirstName"),
+                getInputValue("ArabicFatherName"),
+                getInputValue("ArabicGrandFatherName"),
+                getInputValue("ArabicFamilyName")
+            ].filter(Boolean).join(" ");
+        }
+
+        if (fullEnglishName) {
+            fullEnglishName.value = [
+                getInputValue("EnglishFirstName"),
+                getInputValue("EnglishFatherName"),
+                getInputValue("EnglishGrandFatherName"),
+                getInputValue("EnglishFamilyName")
+            ].filter(Boolean).join(" ");
+        }
     }
     document.querySelectorAll("input").forEach(i => i.addEventListener("blur", buildFullName));
+    document.querySelector('form[action="AddStudent"]')?.addEventListener("submit", buildFullName);
 </script>
 
 <script>
@@ -1968,13 +1991,50 @@
         }
     }
 
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+               const agentOptions = document.getElementById('agentOptions');
+               const agentSearch = document.getElementById('agentSearch');
+               const selectedAgentId = document.getElementById('selectedAgentId');
+
+               if (!agentOptions || !agentSearch || !selectedAgentId) {
+                   return;
+               }
+
+               agentOptions.addEventListener('click', function (event) {
+                   if (event.target && event.target.matches('.agent-item')) {
+                       var agentName = event.target.innerText;
+                       var agentId = event.target.getAttribute('data-id');
+
+
+                       agentSearch.value = agentName;
+                       selectedAgentId.value = agentId;
+
+
+                       agentOptions.style.display = "none";
+                   }
+               });
+
+
+               document.addEventListener('click', function (event) {
+                   const isClickInside = agentSearch.contains(event.target) ||
+                                       agentOptions.contains(event.target);
+                   if (!isClickInside) {
+                       agentOptions.style.display = "none";
+                   }
+               });
+           });
+
+
+
     function toggleUploads() {
         const transferCheckbox = document.getElementById("TransferCheckbox");
         const diplomaCheckbox = document.getElementById("DiplomaCheckbox");
         const transferDiv = document.getElementById("transferUploadDiv");
         const diplomaDiv = document.getElementById("diplomaUploadDiv");
         const transferInput = document.getElementById("transferReport");
-        const diplomaInput = document.getElementById("diplomaReport");
+        const diplomaInput = document.getElementById("diplomaReportInput");
 
         if (transferCheckbox && transferDiv && transferInput) {
             transferDiv.style.display = transferCheckbox.checked
@@ -1988,21 +2048,23 @@
             }
         }
 
-        if (diplomaCheckbox && diplomaDiv && diplomaInput) {
-            diplomaDiv.style.display = diplomaCheckbox.checked
-                ? "block"
-                : "none";
+           if (diplomaCheckbox && diplomaDiv) {
+        diplomaDiv.style.display =
+            diplomaCheckbox.checked ? "block" : "none";
 
-            if (diplomaCheckbox.checked) {
-                diplomaInput.setAttribute("required", "required");
-            } else {
-                diplomaInput.removeAttribute("required");
-            }
+        if (diplomaInput) {
+            diplomaInput.required = diplomaCheckbox.checked;
         }
+    }
     }
 
     function filterCountry(event) {
-        const input = event.target;
+        const input = event?.target;
+
+        if (!input) {
+            return;
+        }
+
         const listId = input.getAttribute("data-list");
         const list = document.getElementById(listId);
 
@@ -2022,33 +2084,181 @@
         }
     }
 
-    function filterNationality() {
-        const input = document.getElementById("recivedGroup");
-        const list = document.getElementById("nationalityOptions");
+    const bilingualLookupAliases = {
+        countries: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Countries.Select(item => new
+                        {
+                                id = item.countryId,
+                                arabicName = item.countryArabic,
+                                englishName = item.countryEnglish
+                        })
+                )),
+        nationalities: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Nationalities.Select(item => new
+                        {
+                                id = item.nationalityId,
+                                arabicName = item.nationalityArabic,
+                                englishName = item.nationalityEnglish
+                        })
+                )),
+        agents: @Html.Raw(JsonConvert.SerializeObject(
+                        Model.Agents.Select(item => new
+                        {
+                                id = item.agentId,
+                                arabicName = item.agentNameArabic,
+                                englishName = item.agentNameEnglish
+                        })
+                ))
+    };
 
-        if (!input || !list) {
-            return;
-        }
-
-        const filter = input.value.toUpperCase();
-        const items = list.getElementsByTagName("li");
-
-        list.style.display = input.value.length > 0 ? "block" : "none";
-
-        for (let i = 0; i < items.length; i++) {
-            const text = items[i].textContent || items[i].innerText;
-            items[i].style.display =
-                text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-        }
+    function normalizeLookupText(value) {
+        return (value || "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLocaleLowerCase();
     }
 
-    function setGenderValue(selectElement) {
-        const genderInput = document.getElementById("studentGender");
+    function selectExactListMatch(input, showValidationMessage = false) {
+        const list = document.getElementById(input.dataset.list);
+        const hiddenInput = document.getElementById(input.dataset.target);
 
-        if (genderInput) {
-            genderInput.value = selectElement.value;
+        if (!list || !hiddenInput) {
+            return true;
         }
+
+        const typedValue = normalizeLookupText(input.value);
+        const options = Array.from(list.querySelectorAll("li[data-id]"));
+        const exactOption = options.find(option =>
+            normalizeLookupText(option.textContent) === typedValue
+        );
+
+        const aliasGroup = list.id === "nationalityOptions"
+            ? bilingualLookupAliases.nationalities
+            : list.id === "agentOptions"
+                ? bilingualLookupAliases.agents
+                : bilingualLookupAliases.countries;
+
+        const exactAlias = (aliasGroup || []).find(item =>
+            normalizeLookupText(item.arabicName) === typedValue ||
+            normalizeLookupText(item.englishName) === typedValue
+        );
+
+        const matchedId = exactOption?.dataset.id ?? exactAlias?.id;
+
+        if (matchedId !== undefined && matchedId !== null && matchedId !== "") {
+            input.value = input.value.trim();
+            hiddenInput.value = matchedId;
+            input.setCustomValidity("");
+            list.style.display = "none";
+            return true;
+        }
+
+        hiddenInput.value = "";
+
+        if (showValidationMessage) {
+            input.setCustomValidity(
+                typedValue
+                    ? "Please enter a valid value from the list."
+                    : "Please select a value from the list."
+            );
+        } else {
+            input.setCustomValidity("");
+        }
+
+        return false;
     }
+
+      document.addEventListener('DOMContentLoaded', function () {
+
+
+        document.querySelectorAll('input[data-list]').forEach(function(input) {
+            const listId = input.getAttribute('data-list');
+            const list = document.getElementById(listId);
+
+            if (!list) {
+                return;
+            }
+
+            input.addEventListener('input', function () {
+                const hiddenInput = document.getElementById(input.dataset.target);
+
+                if (hiddenInput) {
+                    hiddenInput.value = "";
+                }
+
+                input.setCustomValidity("");
+            });
+
+
+            input.addEventListener('keyup', function () {
+                const filter = input.value.toUpperCase();
+                const items = list.getElementsByTagName('li');
+
+                list.style.display = input.value.length > 0 ? 'block' : 'none';
+
+                for (let i = 0; i < items.length; i++) {
+                    const txtValue = items[i].textContent || items[i].innerText;
+                    items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+                }
+            });
+
+
+            input.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (input.value.length > 0) {
+                    list.style.display = 'block';
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                window.setTimeout(function () {
+                    selectExactListMatch(input);
+                }, 150);
+            });
+
+
+            list.addEventListener('click', function(e) {
+                const selectedItem = e.target.closest('li[data-id]');
+
+                if (selectedItem && list.contains(selectedItem)) {
+                    e.stopPropagation();
+                    input.value = selectedItem.textContent.trim();
+                    const hiddenInputId = input.getAttribute('data-target');
+                    if (hiddenInputId) {
+                        document.getElementById(hiddenInputId).value = selectedItem.getAttribute('data-id');
+                    }
+                    input.setCustomValidity("");
+                    list.style.display = 'none';
+                }
+            });
+        });
+
+        const addStudentForm = document.querySelector('form[action="AddStudent"]');
+
+        addStudentForm?.addEventListener('submit', function (event) {
+            const visibleSearchInputs = Array.from(
+                addStudentForm.querySelectorAll('input[data-list][data-target]')
+            ).filter(input => input.offsetParent !== null);
+
+            const invalidInput = visibleSearchInputs.find(input =>
+                !selectExactListMatch(input, true)
+            );
+
+            if (invalidInput) {
+                event.preventDefault();
+                invalidInput.reportValidity();
+                invalidInput.focus();
+            }
+        });
+
+
+        document.addEventListener('click', function () {
+            document.querySelectorAll('ul.list-group').forEach(function(list) {
+                list.style.display = 'none';
+            });
+        });
+    });
+
 
     (() => {
         const degreeDropdown = document.getElementById("dropdownDegree");
@@ -2056,8 +2266,7 @@
         const programDropdown = document.getElementById("dropdownProgram");
         const selectedDegreeInput = document.getElementById("selectedDegreeId");
         const selectedFacultyInput = document.getElementById("selectedFacultyId");
-        const selectedAdmissionMajorInput =
-            document.getElementById("selectedAdmissionMajorId");
+        const selectedAdmissionMajorInput = document.getElementById("selectedAdmissionMajorId");
         const selectedProgramInput = document.getElementById("selectedProgramId");
         const discountInput = document.getElementById("discount");
         const discountHiddenInput = document.getElementById("discountHidden");
@@ -2082,8 +2291,7 @@
         };
 
         const clearMajor = () => {
-            programDropdown.innerHTML =
-                '<option value="">Select Program</option>';
+            programDropdown.innerHTML = '<option value="">Select Program</option>';
             selectedAdmissionMajorInput.value = "";
             selectedProgramInput.value = "";
             discountInput.value = "";
@@ -2094,20 +2302,19 @@
         };
 
         const applySelectedMajor = () => {
-            const selectedOption =
-                programDropdown.options[programDropdown.selectedIndex];
-            const hasSelection =
-                selectedOption && programDropdown.value !== "";
+            const selectedOption = programDropdown.options[programDropdown.selectedIndex];
+            const hasSelection = selectedOption && programDropdown.value !== "";
             const discount = hasSelection
-                ? selectedOption.dataset.discountPercentage || "0"
+                ? (selectedOption.dataset.discountPercentage || "0")
                 : "";
 
             selectedAdmissionMajorInput.value = hasSelection
                 ? programDropdown.value
                 : "";
 
+
             selectedProgramInput.value = hasSelection
-                ? selectedOption.dataset.oracleMajorNo || ""
+                ? (selectedOption.dataset.oracleMajorNo || "")
                 : "";
 
             discountInput.value = discount;
@@ -2144,10 +2351,7 @@
                 });
 
                 if (selectedAdmissionMajorId) {
-                    query.set(
-                        "selectedAdmissionMajorId",
-                        selectedAdmissionMajorId
-                    );
+                    query.set("selectedAdmissionMajorId", selectedAdmissionMajorId);
                 }
 
                 const response = await fetch(`${getMajorsUrl}?${query}`, {
@@ -2161,7 +2365,7 @@
                 const responseBody = await response.json();
                 const majors = Array.isArray(responseBody)
                     ? responseBody
-                    : responseBody.data || [];
+                    : (responseBody.data || []);
 
                 majors.forEach(major => {
                     const admissionMajorId = getValue(
@@ -2182,8 +2386,6 @@
                         "MajorNameEnglish",
                         "majorNameEn",
                         "MajorNameEn",
-                        "displayNameEnglish",
-                        "DisplayNameEnglish",
                         "displayName",
                         "DisplayName",
                         "majorName",
@@ -2213,10 +2415,14 @@
                 });
 
                 applySelectedMajor();
-            } catch (error) {
+            }
+            catch (error) {
                 clearMajor();
+                programDropdown.innerHTML =
+                    '<option value="">Unable to load programs</option>';
                 console.error(error);
-            } finally {
+            }
+            finally {
                 programDropdown.disabled = false;
             }
         };
@@ -2232,138 +2438,75 @@
 
         loadMajors(initiallySelectedMajor);
     })();
+    function filterNationality() {
+        const input = document.getElementById("recivedGroup");
+        const list = document.getElementById("nationalityOptions");
 
-    document.addEventListener("DOMContentLoaded", () => {
-        const agentSearch = document.getElementById("agentSearch");
-        const agentOptions = document.getElementById("agentOptions");
-
-        if (agentSearch && agentOptions) {
-            agentOptions.addEventListener("click", event => {
-                if (event.target && event.target.matches(".agent-item")) {
-                    agentSearch.value = event.target.innerText;
-
-                    const selectedAgentInput =
-                        document.getElementById("selectedAgentId");
-
-                    if (selectedAgentInput) {
-                        selectedAgentInput.value =
-                            event.target.getAttribute("data-id");
-                    }
-
-                    agentOptions.style.display = "none";
-                }
-            });
-
-            document.addEventListener("click", event => {
-                const clickedInside = agentSearch.contains(event.target) ||
-                    agentOptions.contains(event.target);
-
-                if (!clickedInside) {
-                    agentOptions.style.display = "none";
-                }
-            });
+        if (!input || !list) {
+            return;
         }
 
-        document.querySelectorAll("input[data-list]").forEach(input => {
-            const list = document.getElementById(input.getAttribute("data-list"));
+        const filter = input.value.toUpperCase();
+        const items = list.getElementsByTagName("li");
 
-            if (!list) {
-                return;
-            }
+        list.style.display = input.value.length > 0 ? "block" : "none";
 
-            input.addEventListener("click", event => {
-                event.stopPropagation();
-
-                if (input.value.length > 0) {
-                    list.style.display = "block";
-                }
-            });
-
-            list.addEventListener("click", event => {
-                if (!event.target ||
-                    !event.target.matches("li.country-item")) {
-                    return;
-                }
-
-                event.stopPropagation();
-                input.value = event.target.innerText;
-
-                const hiddenInputId = input.getAttribute("data-target");
-                const hiddenInput = hiddenInputId
-                    ? document.getElementById(hiddenInputId)
-                    : null;
-
-                if (hiddenInput) {
-                    hiddenInput.value = event.target.getAttribute("data-id");
-                }
-
-                list.style.display = "none";
-            });
-        });
-
-        document.querySelectorAll(".nationality-item").forEach(item => {
-            item.addEventListener("click", () => {
-                const nationalityInput = document.getElementById("recivedGroup");
-                const nationalityIdInput =
-                    document.getElementById("selectedNationalityId");
-                const nationalityOptions =
-                    document.getElementById("nationalityOptions");
-
-                if (nationalityInput) {
-                    nationalityInput.value = item.innerText;
-                }
-
-                if (nationalityIdInput) {
-                    nationalityIdInput.value = item.getAttribute("data-id");
-                }
-
-                if (nationalityOptions) {
-                    nationalityOptions.style.display = "none";
-                }
-            });
-        });
-
-        document.addEventListener("click", () => {
-            document.querySelectorAll("ul.list-group").forEach(list => {
-                list.style.display = "none";
-            });
-        });
-
-        const transferCheckbox = document.getElementById("TransferCheckbox");
-        const diplomaCheckbox = document.getElementById("DiplomaCheckbox");
-
-        if (transferCheckbox) {
-            transferCheckbox.addEventListener("change", toggleUploads);
+        for (let i = 0; i < items.length; i++) {
+            const text = items[i].textContent || items[i].innerText;
+            items[i].style.display =
+                text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
         }
+    }
+    document.querySelectorAll('.nationality-item').forEach(function(item) {
+                               item.addEventListener('click', function() {
+                                   var nationalityName = item.innerText;
+                                   var nationalityId = item.getAttribute('data-id');
 
-        if (diplomaCheckbox) {
-            diplomaCheckbox.addEventListener("change", toggleUploads);
+
+                                   document.getElementById('recivedGroup').value = nationalityName;
+
+
+                                   document.getElementById('selectedNationalityId').value = nationalityId;
+
+
+                                   document.getElementById('nationalityOptions').style.display = "none";
+                               });
+                           });
+
+
+           document.getElementById("dropdownDegree").addEventListener("change", function () {
+           const selectedDegreeId = parseInt(this.value);
+           document.getElementById("selectedDegreeId").value = selectedDegreeId;
+       });
+    function setGenderValue(selectElement) {
+        const genderInput = document.getElementById("studentGender");
+
+        if (genderInput) {
+            genderInput.value = selectElement.value;
         }
+    }
 
-        toggleUploads();
+             document.addEventListener('DOMContentLoaded', function () {
+                  const dropdown = document.getElementById('dropdownDegree');
+              const certDiv = document.getElementById('bachelorCertDiv');
 
-        const degreeDropdown = document.getElementById("dropdownDegree");
-        const certificateDiv = document.getElementById("bachelorCertDiv");
+              const masterKeyword = "master";
 
-        if (degreeDropdown && certificateDiv) {
-            const updateCertificateVisibility = () => {
-                const selectedOption =
-                    degreeDropdown.options[degreeDropdown.selectedIndex];
-                const selectedText = selectedOption
-                    ? selectedOption.text.toLowerCase()
-                    : "";
+              function updateCertificateVisibility() {
+                  const selectedText = dropdown.options[dropdown.selectedIndex].text.toLowerCase();
+                  if (selectedText.includes(masterKeyword)) {
+                      certDiv.style.display = "block";
+                  } else {
+                      certDiv.style.display = "none";
+                  }
+              }
 
-                certificateDiv.style.display = selectedText.includes("master")
-                    ? "block"
-                    : "none";
-            };
 
-            updateCertificateVisibility();
-            degreeDropdown.addEventListener(
-                "change",
-                updateCertificateVisibility
-            );
-        }
-    });
+              updateCertificateVisibility();
+
+
+              dropdown.addEventListener('change', updateCertificateVisibility);
+          });
+
 </script>
 

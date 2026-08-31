@@ -1,4 +1,5 @@
 ﻿@using University_Agent_System.Models
+@using Newtonsoft.Json
 @using University_Agent_System.Models.ViewModel
 @using System.IdentityModel.Tokens.Jwt
 @using System.Security.Claims
@@ -73,7 +74,7 @@
                 </div>
 
             </div>
-            <form asp-controller="En" asp-action="EditStudent" method="post" enctype="multipart/form-data">
+            <form id="editStudentForm" asp-controller="En" asp-action="EditStudent" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
 
                 <input type="hidden" name="studentId" value="@Model.studentId" />
@@ -90,7 +91,9 @@
                                         <label for="discount" class="form-label heading16 labelspacing">University Number</label>
                                     </div>
                                     <div class="col-lg-8" style="padding-left:8px">
-                                        <input type="text" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" />
+@*                                         <input type="text" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" />
+ *@                                        <input type="text" asp-for="studentNumber" class="form-control" id="studentNumber" name="studentNumber" value="@Model.studentNumber" data-val="false" />
+
                                     </div>
                                 </div>
                             </div>
@@ -100,7 +103,7 @@
                                         <label for="discount" class="form-label heading16 labelspacing">Password</label>
                                     </div>
                                     <div class="col-lg-8" style="padding-left:8px">
-                                        <input type="text" class="form-control" id="Password" name="Password" value="@Model.Password" />
+                                        <input type="text" class="form-control" id="Password" name="Password" value="@Model.Password" data-val="false" />
                                     </div>
                                 </div>
                             </div>
@@ -411,7 +414,14 @@
                                     <!-- Nationality / DropDownList -->
                                     <div class="col-lg-8" style="padding-left:8px">
                                         <div class="input-group">
-                                            <input class="form-control" type="search" value="@selectedNationality" id="recivedGroup" onkeyup="filterNationality()" placeholder="Search for a country..." />
+                                            <input class="form-control"
+                                                   type="search"
+                                                   value="@selectedNationality"
+                                                   id="recivedGroup"
+                                                   data-list="nationalityOptions"
+                                                   data-target="selectedNationalityId"
+                                                   onkeyup="filterNationality()"
+                                                   placeholder="Search nationality..." />
 
                                             <input type="hidden" asp-for="nationalityId" id="selectedNationalityId" value="@Model.nationalityId" name="nationalityId">
 
@@ -496,7 +506,7 @@
                                             @foreach (var country in Model.Countries)
                                             {
                                                 <li class="list-group-item country-item" data-id="@country.countryId">
-                                                    @country.countryArabic
+                                                    @country.countryEnglish
                                                 </li>
                                             }
                                         </ul>
@@ -698,7 +708,7 @@
                                             @foreach (var country in Model.Countries)
                                             {
                                                 <li class="list-group-item country-item" data-id="@country.countryId">
-                                                    @country.countryArabic
+                                                    @country.countryEnglish
                                                 </li>
                                             }
                                         </ul>
@@ -1035,7 +1045,14 @@
                             <div class="row g-0">
                                 <div class="">
                                     <div class="input-group">
-                                        <input class="form-control" type="search" value="@selectedAgent" id="agentSearch" onkeyup="filterAgent()" placeholder="Search Agent...">
+                                        <input class="form-control"
+                                               type="search"
+                                               value="@selectedAgent"
+                                               id="agentSearch"
+                                               data-list="agentOptions"
+                                               data-target="selectedAgentId"
+                                               onkeyup="filterAgent()"
+                                               placeholder="Search Agent...">
 
                                         @if (userType == "Admin")
                                         {
@@ -1097,7 +1114,8 @@
                 </div>
 
                 <!-- Diploma Info -->
-                <div id="diplomaUploadDiv" style="display:none;">
+                <div id="diplomaUploadDiv"
+                     style="display:@(Model.isDiploma == 1 ? "block" : "none");">
                     <div class="card mb-4">
 
                         <div class="card-header heading16">
@@ -1228,7 +1246,8 @@
                 </div>
 
                 <!-- Transfer Info -->
-                <div id="transferUploadDiv" style="display:none;">
+                <div id="transferUploadDiv"
+                     style="display:@(Model.isTransfer == 1 ? "block" : "none");">
                     <div class="card mb-4">
                         <div class="card-header heading16">
                             For Students Transferring from Other Universities
@@ -1526,7 +1545,13 @@
 
            document.addEventListener('DOMContentLoaded', function () {
 
-               var agentOptions = document.getElementById('agentOptions');
+               const agentOptions = document.getElementById('agentOptions');
+               const agentSearch = document.getElementById('agentSearch');
+               const selectedAgentId = document.getElementById('selectedAgentId');
+
+               if (!agentOptions || !agentSearch || !selectedAgentId) {
+                   return;
+               }
 
                agentOptions.addEventListener('click', function (event) {
                    if (event.target && event.target.matches('.agent-item')) {
@@ -1534,8 +1559,8 @@
                        var agentId = event.target.getAttribute('data-id');
 
 
-                       document.getElementById('agentSearch').value = agentName;
-                       document.getElementById('selectedAgentId').value = agentId;
+                       agentSearch.value = agentName;
+                       selectedAgentId.value = agentId;
 
 
                        agentOptions.style.display = "none";
@@ -1544,7 +1569,7 @@
 
 
                document.addEventListener('click', function (event) {
-                   var isClickInside = document.getElementById('agentSearch').contains(event.target) ||
+                   const isClickInside = agentSearch.contains(event.target) ||
                                        agentOptions.contains(event.target);
                    if (!isClickInside) {
                        agentOptions.style.display = "none";
@@ -1553,41 +1578,151 @@
            });
 
 
-                                  function toggleUploads() {
-           const transferChecked = document.getElementById("TransferCheckbox").checked;
-           const diplomaChecked = document.getElementById("DiplomaCheckbox").checked;
-
+       function toggleUploads() {
+           const transferCheckbox = document.getElementById("TransferCheckbox");
+           const diplomaCheckbox = document.getElementById("DiplomaCheckbox");
            const transferDiv = document.getElementById("transferUploadDiv");
            const diplomaDiv = document.getElementById("diplomaUploadDiv");
-
            const transferInput = document.getElementById("transferReport");
-           const diplomaInput = document.getElementById("diplomaReport");
+           const diplomaInput = document.getElementById("diplomaReportInput");
+           const existingTransferPath = document.querySelector(
+               'input[name="studentGrades_ReportPath"]'
+           )?.value.trim();
+           const existingDiplomaPath = document.querySelector(
+               'input[name="studentGrades_ReportPath1"]'
+           )?.value.trim();
 
-
-           if (transferChecked) {
-               transferDiv.style.display = "block";
-               transferInput.setAttribute("required", "required");
-           } else {
-               transferDiv.style.display = "none";
-               transferInput.removeAttribute("required");
+           if (transferCheckbox && transferDiv) {
+               transferDiv.style.display = transferCheckbox.checked
+                   ? "block"
+                   : "none";
            }
 
+           if (transferInput && transferCheckbox) {
+               transferInput.required =
+                   transferCheckbox.checked && !existingTransferPath;
+           }
 
-           if (diplomaChecked) {
-               diplomaDiv.style.display = "block";
-               diplomaInput.setAttribute("required", "required");
-           } else {
-               diplomaDiv.style.display = "none";
-               diplomaInput.removeAttribute("required");
+           if (diplomaCheckbox && diplomaDiv) {
+               diplomaDiv.style.display = diplomaCheckbox.checked
+                   ? "block"
+                   : "none";
+           }
+
+           if (diplomaInput && diplomaCheckbox) {
+               diplomaInput.required =
+                   diplomaCheckbox.checked && !existingDiplomaPath;
            }
        }
 
+       toggleUploads();
+       document.addEventListener("DOMContentLoaded", toggleUploads);
 
-       window.onload = toggleUploads;
 
+     const bilingualLookupAliases = {
+         countries: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Countries.Select(item => new
+                          {
+                                  id = item.countryId,
+                                  arabicName = item.countryArabic,
+                                  englishName = item.countryEnglish
+                          })
+                  )),
+         nationalities: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Nationalities.Select(item => new
+                          {
+                                  id = item.nationalityId,
+                                  arabicName = item.nationalityArabic,
+                                  englishName = item.nationalityEnglish
+                          })
+                  )),
+         agents: @Html.Raw(JsonConvert.SerializeObject(
+                          Model.Agents.Select(item => new
+                          {
+                                  id = item.agentId,
+                                  arabicName = item.agentNameArabic,
+                                  englishName = item.agentNameEnglish
+                          })
+                  ))
+     };
 
-     function filterCountry() {
-        var input = event.target;
+     function normalizeLookupText(value) {
+         return (value || "")
+             .trim()
+             .replace(/\s+/g, " ")
+             .toLocaleLowerCase();
+     }
+
+     function getLookupAliasGroup(listId) {
+         if (listId === "nationalityOptions") {
+             return bilingualLookupAliases.nationalities;
+         }
+
+         if (listId === "agentOptions") {
+             return bilingualLookupAliases.agents;
+         }
+
+         return bilingualLookupAliases.countries;
+     }
+
+     function lookupOptionMatches(option, typedText, listId) {
+         const normalizedFilter = normalizeLookupText(typedText);
+         const alias = (getLookupAliasGroup(listId) || []).find(item =>
+             String(item.id) === String(option.dataset.id)
+         );
+
+         return [
+             option.textContent,
+             alias?.arabicName,
+             alias?.englishName
+         ].some(value =>
+             normalizeLookupText(value).includes(normalizedFilter)
+         );
+     }
+
+     function selectExactListMatch(input, showValidationMessage = false) {
+         const list = document.getElementById(input.dataset.list);
+         const hiddenInput = document.getElementById(input.dataset.target);
+
+         if (!list || !hiddenInput) {
+             return true;
+         }
+
+         const typedValue = normalizeLookupText(input.value);
+         const options = Array.from(list.querySelectorAll("li[data-id]"));
+         const exactOption = options.find(option =>
+             normalizeLookupText(option.textContent) === typedValue
+         );
+         const exactAlias = (getLookupAliasGroup(list.id) || []).find(item =>
+             normalizeLookupText(item.arabicName) === typedValue ||
+             normalizeLookupText(item.englishName) === typedValue
+         );
+         const matchedId = exactOption?.dataset.id ?? exactAlias?.id;
+
+         if (matchedId !== undefined && matchedId !== null && matchedId !== "") {
+             input.value = input.value.trim();
+             hiddenInput.value = matchedId;
+             input.setCustomValidity("");
+             list.style.display = "none";
+             return true;
+         }
+
+         hiddenInput.value = "";
+         input.setCustomValidity(showValidationMessage
+             ? (typedValue
+                 ? "Please enter a valid value from the list."
+                 : "Please select a value from the list.")
+             : "");
+         return false;
+     }
+
+     function filterCountry(event) {
+        const input = event?.target || document.activeElement;
+
+        if (!input || !input.dataset.list) {
+            return;
+        }
+
         var filter = input.value.toUpperCase();
         var listId = input.getAttribute("data-list");
         var list = document.getElementById(listId);
@@ -1610,16 +1745,32 @@
             const listId = input.getAttribute('data-list');
             const list = document.getElementById(listId);
 
+            if (!list) {
+                return;
+            }
+
+            input.addEventListener('input', function () {
+                const hiddenInput = document.getElementById(input.dataset.target);
+
+                if (hiddenInput) {
+                    hiddenInput.value = "";
+                }
+
+                input.setCustomValidity("");
+            });
+
 
             input.addEventListener('keyup', function () {
-                const filter = input.value.toUpperCase();
                 const items = list.getElementsByTagName('li');
 
                 list.style.display = input.value.length > 0 ? 'block' : 'none';
 
                 for (let i = 0; i < items.length; i++) {
-                    const txtValue = items[i].textContent || items[i].innerText;
-                    items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+                    items[i].style.display = lookupOptionMatches(
+                        items[i],
+                        input.value,
+                        listId
+                    ) ? '' : 'none';
                 }
             });
 
@@ -1631,18 +1782,45 @@
                 }
             });
 
+            input.addEventListener('blur', function () {
+                window.setTimeout(function () {
+                    selectExactListMatch(input);
+                }, 150);
+            });
+
 
             list.addEventListener('click', function(e) {
-                if (e.target && e.target.matches('li.country-item')) {
+                const selectedItem = e.target.closest('li[data-id]');
+
+                if (selectedItem && list.contains(selectedItem)) {
                     e.stopPropagation();
-                    input.value = e.target.innerText;
+                    input.value = selectedItem.textContent.trim();
                     const hiddenInputId = input.getAttribute('data-target');
                     if (hiddenInputId) {
-                        document.getElementById(hiddenInputId).value = e.target.getAttribute('data-id');
+                        document.getElementById(hiddenInputId).value = selectedItem.getAttribute('data-id');
                     }
+                    input.setCustomValidity("");
                     list.style.display = 'none';
                 }
             });
+        });
+
+        const editStudentForm = document.getElementById('editStudentForm');
+
+        editStudentForm?.addEventListener('submit', function (event) {
+            const visibleSearchInputs = Array.from(
+                editStudentForm.querySelectorAll('input[data-list][data-target]')
+            ).filter(input => input.offsetParent !== null);
+
+            const invalidInput = visibleSearchInputs.find(input =>
+                !selectExactListMatch(input, true)
+            );
+
+            if (invalidInput) {
+                event.preventDefault();
+                invalidInput.reportValidity();
+                invalidInput.focus();
+            }
         });
 
 

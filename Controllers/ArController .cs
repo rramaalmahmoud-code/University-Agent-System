@@ -553,7 +553,8 @@ namespace University_Agent_System.Controllers
                 return Forbid(); // 🚫 Unauthorized access
             }
             ValidateUniqueFields(model, existingStudent);
-
+            ModelState.Remove(nameof(StudentViewModel.studentNumber));
+            ModelState.Remove(nameof(StudentViewModel.Password));
             if (model.isTransfer == null || model.isTransfer == 0 || model.studentGrades_ReportPath != null)
             {
                 ModelState.Remove("studentGrades_Report");
