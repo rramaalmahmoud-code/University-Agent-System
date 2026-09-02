@@ -1,27 +1,32 @@
 ﻿using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using Oracle.ManagedDataAccess.Client;
+using PhoneNumbers;
+using System.Configuration;
+using System.Data;
+using System.Diagnostics.Metrics;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Mail;
+using System.Text;
+using System.Text.RegularExpressions;
+using University_Agent_System.Models;
 using University_Agent_System.Models.Oracle;
 using University_Agent_System.Models.ViewModel;
-using University_Agent_System.Models;
-using System.Data;
-using Oracle.ManagedDataAccess.Client;
-using System.Configuration;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Authorization;
 using University_Agent_System.Services;
-using System.IdentityModel.Tokens.Jwt;
-using System.Net.Mail;
-using System.Net;
-using System.Diagnostics.Metrics;
-using PhoneNumbers;
-using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using University_Agent_System.Services.Agents;
+using University_Agent_System.Services.AgentStatistics;
+using University_Agent_System.Services.Dashboard;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace University_Agent_System.Controllers
 {
- 
-    public class AdminEnController : Controller
+
+    public class AdminEnController : AdminDashboardControllerBase
     {
         private readonly IDbConnection _db;
         private readonly IDbConnection _oracleDb; // اتصال خاص بالأوراكل
@@ -31,8 +36,9 @@ namespace University_Agent_System.Controllers
         private readonly IWebHostEnvironment _env;
         private readonly IWhatsAppService _whatsAppService;
 
-       
-        public AdminEnController(IDbConnection db, IDbConnection oracleDb, IConfiguration configuration, AcademicService academicService, StudentsBySemester studentsBySemester, IWebHostEnvironment env, IWhatsAppService whatsAppService)
+
+        public AdminEnController(IDbConnection db, IConfiguration configuration, AcademicService academicService, StudentsBySemester studentsBySemester, IWebHostEnvironment env, IWhatsAppService whatsAppService, IAdminDashboardService dashboardService, IAgentManagementService agentManagementService, IAgentStatisticsService agentStatisticsService)
+            : base(dashboardService, agentManagementService, agentStatisticsService)
         {
             _db = db;
             string oracleConnStr = configuration.GetConnectionString("OracleConnection");
@@ -51,50 +57,6 @@ namespace University_Agent_System.Controllers
             return View();
         }
 
-        // Get all students with "Pending" status
-        private List<StudentWithMajorVM> GetPendingStudents()
-        {
-            // Get all students
-            string studentSql = "SELECT * FROM Students WHERE active = 1";
-            var students = _db.Query<student>(studentSql).ToList();
-
-            // Get all statuses
-            string statusSql = "SELECT statusId, statusEnglish FROM Statuses WHERE active = 1";
-            var statuses = _db.Query<status>(statusSql).ToList();
-
-            // Get statusId for "Pending"
-            var pendingStatusId = statuses.FirstOrDefault(st => st.statusEnglish.ToLower() == "pending")?.statusId;
-
-            if (pendingStatusId == null)
-            {
-                return new List<StudentWithMajorVM>();
-            }
-
-            // Get all agents
-            string agentSql = "SELECT agentId, agentNameEnglish FROM Agents WHERE active = 1";
-            var agents = _db.Query<agent>(agentSql).ToList();
-
-            // Get all majors
-            string majorSql = "SELECT major_no, Major_Name_S FROM major_info1_vw";
-            var majors = _oracleDb.Query<ProgramVM>(majorSql).ToList();
-
-            // Filter students with "Pending" status only and map them
-            return students
-                .Where(s => s.statusId == pendingStatusId)
-                .Select(s => new StudentWithMajorVM
-                {
-                    studentNameEnglish = s.studentNameEnglish,
-                    studentPhone = s.studentPhone,
-                    studentCode = s.studentCode,
-                    Major_Name_S = majors.FirstOrDefault(m => m.major_no == s.major_no)?.Major_Name_S ?? "N/A",
-                    agentNameEnglish = agents.FirstOrDefault(a => a.agentId == s.agentId)?.agentNameEnglish ?? "N/A",
-                    statusEnglish = statuses.FirstOrDefault(st => st.statusId == s.statusId)?.statusEnglish ?? "N/A",
-                    studentId = s.studentId
-                })
-                .ToList();
-        }
-
-
         private List<student> GetAllStudents()
         {
             string sql = "SELECT * FROM Students WHERE active = 1"; // Or your correct table
@@ -108,126 +70,43 @@ namespace University_Agent_System.Controllers
         }
 
 
-        // Search students by agent name (case-insensitive)
-        private (List<StudentWithMajorVM> Students, int? agentId, string agentName) SearchStudentsByAgent(List<student> students, string search)
-        {
-            // Get all agents
-            string agentSql = "SELECT agentId, agentNameEnglish ,agentCode FROM Agents WHERE active = 1";
-            var agents = _db.Query<agent>(agentSql).ToList();
-
-            // Get majors from Oracle
-            string majorSql = "SELECT major_no, Major_Name_S FROM major_info1_vw";
-            var majors = _oracleDb.Query<ProgramVM>(majorSql).ToList();
-
-            // Get all statuses
-            string statusSql = "SELECT statusId, statusEnglish FROM Statuses WHERE active = 1";
-            var statuses = _db.Query<status>(statusSql).ToList();
-
-            if (string.IsNullOrEmpty(search))
-            {
-                return (new List<StudentWithMajorVM>(), null, null);
-            }
-
-    
-            // Try parse search string to int (for agentCode)
-            bool isNumeric = int.TryParse(search, out int agentCodeSearch);
-            // Find agent by name (string match) or code (exact int match)
-            var matchedAgent = agents.FirstOrDefault(a =>
-        ((!string.IsNullOrEmpty(a.agentNameEnglish) &&
-                a.agentNameEnglish.ToLower().Contains(search.ToLower())) ||
-        (isNumeric && a.agentCode == agentCodeSearch)));
-            int? matchedAgentId = matchedAgent?.agentId;
-            string matchedAgentName = matchedAgent?.agentNameEnglish ?? "N/A";
-
-            // Filter students who belong to that agent
-            var filteredStudents = students
-                .Where(s => s.agentId == matchedAgentId)
-                .Select(s => new StudentWithMajorVM
-                {
-                    studentNameEnglish = s.studentNameEnglish,
-                    studentPhone = s.studentPhone,
-                    studentCode = s.studentCode,
-                    Major_Name_S = majors.FirstOrDefault(m => m.major_no == s.major_no)?.Major_Name_S ?? "N/A",
-                    agentNameEnglish = matchedAgentName,
-                    statusEnglish = statuses.FirstOrDefault(st => st.statusId == s.statusId)?.statusEnglish ?? "N/A",
-                    studentId = s.studentId,
-                    agentId = s.agentId,
-                     approvedByStudent = s.studentApproval == 1
-
-                }).ToList();
-
-            return (filteredStudents, matchedAgentId, matchedAgentName);
-        }
         [Authorize(Roles = "Admin,Super Admin")]
-
-        // Action to return the home page with students based on agent search
-        //public IActionResult Home(string search, int page = 1, int pageSize = 10)
-        //{
-        //    // Get pending students
-        //    var pendingStudents = GetPendingStudents();
-
-        //    // Get ALL students, not just pending
-        //    var allStudents = GetAllStudents();
-        //    // Apply pagination on pending students
-        //    var totalPending = pendingStudents.Count;
-        //    var pagedPending = pendingStudents
-        //                        .Skip((page - 1) * pageSize)
-        //                        .Take(pageSize)
-        //                        .ToList();
-
-        //    // Get both the filtered students and agentId
-        //    var (studentsWithMajor, agentId, agentName) = SearchStudentsByAgent(allStudents, search);
-
-
-        //    // Prepare the model to return
-        //    var model = new StudentListViewModel
-        //    {
-        //        agentName = agentName,
-        //        agentId = agentId ,
-        //        SearchTerm = search,
-        //        Students = studentsWithMajor,
-        //        PendingStudents = pagedPending, // pending students
-        //          PendingTotalCount = totalPending,
-        //        CurrentPage = page,
-        //        PageSize = pageSize
-
-        //    };
-
-        //    return View("~/Views/En/Admin/Home.cshtml", model);
-        //}
-        // Action to return the home page with students based on agent search
-        public IActionResult Home(string search, int page = 1, int pageSize = 10)
+        public Task<IActionResult> Home(
+            string search,
+            string intake = "current",
+            int page = 1,
+            int pageSize = 10)
         {
-            var pendingStudents = GetPendingStudents();
-            var allStudents = GetAllStudents();
+            return HomeCoreAsync(
+                search,
+                intake,
+                page,
+                pageSize,
+                DashboardLanguage.English,
+                "~/Views/En/Admin/Home.cshtml");
+        }
 
-            var totalPending = pendingStudents.Count;
-            var pagedPending = pendingStudents
-                                .Skip((page - 1) * pageSize)
-                                .Take(pageSize)
-                                .ToList();
+        [Authorize(Roles = "Admin,Super Admin")]
+        public Task<IActionResult> ApplicationStatusReport(string intake = "current")
+        {
+            return ApplicationStatusReportCoreAsync(
+                intake,
+                DashboardLanguage.English,
+                "~/Views/En/Admin/ApplicationStatusReport.cshtml");
+        }
 
-            var (studentsWithMajor, agentId, agentName) = SearchStudentsByAgent(allStudents, search);
-
-            var model = new StudentListViewModel
-            {
-                agentName = agentName,
-                agentId = agentId,
-                SearchTerm = search,
-                Students = studentsWithMajor,
-
-                PendingStudents = pagedPending,
-                PendingTotalCount = totalPending,
-                CurrentPage = page,
-                PageSize = pageSize,
-
-                // ✅ for counter
-
-                // ✅ for dropdown
-                Agents = _db.Query<agent>("SELECT * FROM Agents WHERE active = 1").ToList()
-            };
-
-            return View("~/Views/En/Admin/Home.cshtml", model);
+        [Authorize(Roles = "Admin,Super Admin")]
+        public Task<IActionResult> AgentPerformanceReport(
+            string search,
+            string intake = "current",
+            string health = "all")
+        {
+            return AgentPerformanceReportCoreAsync(
+                search,
+                intake,
+                health,
+                DashboardLanguage.English,
+                "~/Views/En/Admin/AgentPerformanceReport.cshtml");
         }
 
         [Authorize(Roles = "Admin,Super Admin")]
@@ -286,11 +165,11 @@ LEFT JOIN Degrees d ON s.degreeId=d.degreeId
             );
 
             if (student == null)
-                return null;
+                return NotFound();
 
             var files = new List<StudentFileViewModel>();
 
-           /* string basePath = "/uploads";*/ // adjust based on your setup
+            /* string basePath = "/uploads";*/ // adjust based on your setup
 
             void AddFile(string title, string filePath, DateTime? uploadDate)
             {
@@ -1245,7 +1124,7 @@ WHERE s.studentId = @studentId
             return View("~/Views/En/Admin/AddAgent.cshtml", model);
         }
 
-      
+
 
         //with whatsapp
         //[RequestSizeLimit(50_000_000)] // 50 MB
@@ -1957,7 +1836,7 @@ WHERE s.studentId = @studentId
         }
 
 
-       
+
 
         private static string DegreeToArabic(int? degreeId)
         {
@@ -2208,10 +2087,10 @@ WHERE s.studentId = @studentId";
                 agentPhone = a.agentPhone,
                 agentCode = a.agentCode ?? null,
                 country = countries.FirstOrDefault(c => c.countryId == a.countryId)?.countryEnglish ?? "N/A",
-                city=a.city,
-                agentEmail=a.agentEmail,
-                agentStatus=a.agentStatus,
-        
+                city = a.city,
+                agentEmail = a.agentEmail,
+                agentStatus = a.agentStatus,
+
 
 
 
@@ -2222,7 +2101,7 @@ WHERE s.studentId = @studentId";
             model.CurrentPage = page;
             model.PageSize = pageSize;
 
-            return View("~/Views/En/Admin/AgentList.cshtml",model);
+            return View("~/Views/En/Admin/AgentList.cshtml", model);
         }
         private string GetCurrentAcademicYear()
         {
@@ -2253,9 +2132,9 @@ WHERE s.studentId = @studentId";
             model.SelectedAcademicYear = selectedAcademicYear;
 
             // Fetch students for that academic year and all semesters
-            model.FirstSemesterStudents = _studentsBySemester.    
-                
-                
+            model.FirstSemesterStudents = _studentsBySemester.
+
+
                 GetStudentsBySemester(selectedAcademicYear, 1, agentId);
             model.SecondSemesterStudents = _studentsBySemester.GetStudentsBySemester(selectedAcademicYear, 2, agentId);
             model.SummerSemesterStudents = _studentsBySemester.GetStudentsBySemester(selectedAcademicYear, 3, agentId);
@@ -2264,97 +2143,24 @@ WHERE s.studentId = @studentId";
             return View("~/Views/En/Admin/Filter.cshtml", model);
         }
         [Authorize(Roles = "Admin,Super Admin")]
-        public IActionResult UpdateAgentStatus(int agentId, string status)
+        public Task<IActionResult> UpdateAgentStatus(int agentId, string status)
         {
-            // Get current status and userId
-            string sqlSelect = "SELECT agentStatus, userId FROM Agents WHERE agentId = @agentId";
-            var result = _db.QueryFirstOrDefault<(string agentStatus, int userId)>(sqlSelect, new { agentId });
-
-            if (result == default)
-            {
-                // Handle case where agentId is not found
-                return NotFound();
-            }
-
-            string currentStatus = result.agentStatus;
-            int userId = result.userId;
-            string newStatus = status;
-
-            // If clicking again on the same status, unfreeze or unblock
-            if ((status == "Freezed" && currentStatus == "Freezed") ||
-                (status == "Blocked" && currentStatus == "Blocked"))
-            {
-                newStatus = "Active";
-            }
-
-            // Update agent status
-            string sqlUpdateAgent = "UPDATE Agents SET agentStatus = @newStatus WHERE agentId = @agentId";
-            _db.Execute(sqlUpdateAgent, new { newStatus, agentId });
-
-            // Set user active status: 0 for Freezed/Blocked, 1 for Active
-            int userActive = (newStatus == "Freezed" || newStatus == "Blocked") ? 0 : 1;
-
-            // Update user active status
-            string sqlUpdateUser = "UPDATE Users SET active = @userActive WHERE userId = @userId";
-            _db.Execute(sqlUpdateUser, new { userActive, userId });
-
-            return RedirectToAction("AgentInfo", new { id = agentId });
+            return UpdateAgentStatusCoreAsync(
+                agentId,
+                status,
+                "Unsupported agent status.");
         }
+
         [Authorize(Roles = "Admin,Super Admin")]
         [Route("En/Admin/AgentInfo")]
-        //[Route("En/Admin/AgentInfo/{id}")]
-        public IActionResult AgentInfo(int agentId)
+        public Task<IActionResult> AgentInfo(int agentId)
         {
-
-            string studentSql = "SELECT * FROM Agents WHERE active = 1 AND agentId = @agentId";
-            var studentInfo = _db.QueryFirstOrDefault<agent>(
-                studentSql,
-                new { agentId = agentId } // ✅ Pass the parameter here
-            );
-
-            // Step 1: Get SQL Server data
-            var agent = _db.QueryFirstOrDefault<AgentViewModel>(
-                @"SELECT 
-        agentNameEnglish, 
-        agentId, 
-agentCode,
-a.active,
-                 nat.nationalityEnglish AS Nationality,
- c.nationalityEnglish AS Country,
-        
-        city, 
-        agentEmail, 
-       agentPhone,
-notes,
-passowrd,
-agentStatus
-      FROM Agents a
-    
-            LEFT JOIN Nationalities nat ON a.nationalityId = nat.nationalityId
-  LEFT JOIN Nationalities c ON a.countryId=c.nationalityId
-
-      WHERE agentId = @agentId",
-                new { agentId = agentId }  // ✅ Make sure the name matches SQL parameter
-            );
-
-            if (agent == null)
-                return null;
-            if (agent != null)
-            {
-                //agent.isApproved = agent.Status == "Student's Approved " ? "Yes" : "No";
-                agent.isActive = agent.agentStatus switch
-                {
-                    "Freezed" => "Freezed",
-                    "Blocked" => "Blocked",
-                    _ => "Active"
-                };
-
-                agent.agentId = agentId;
-            }
-
-
-            return View("~/Views/En/Admin/AgentInfo.cshtml", agent);
+            return AgentInfoCoreAsync(
+                agentId,
+                DashboardLanguage.English,
+                "~/Views/En/Admin/AgentInfo.cshtml");
         }
+
         //[Authorize(Roles = "Admin,Super Admin")]
         //public IActionResult EditAgent(AgentViewModel model, int? agentId, int? id)
         //{
@@ -2739,24 +2545,35 @@ agentStatus
 
         //        _db.Execute(sql, new { CurrentDate = currentDate });
         //    }
-        public void UpdateExpiredAgents()
+        private void UpdateExpiredAgents()
         {
             var currentDate = DateTime.Now;
 
-            string sqlExpired = @"
-        UPDATE Agents 
-        SET agentStatus = 'Expired'
-        WHERE contractEndDate < @CurrentDate AND agentStatus != 'Expired'
-    ";
+            // تحويل الوكيل إلى Expired فقط إذا لم يكن محظورًا أو مجمدًا.
+            const string expireAgentsSql = @"
+UPDATE Agents
+SET agentStatus = 'Expired'
+WHERE contractEndDate IS NOT NULL
+  AND contractEndDate < @CurrentDate
+  AND ISNULL(LTRIM(RTRIM(agentStatus)), '') NOT IN
+      ('Blocked', 'Freezed', 'Frozen');";
 
-            string sqlActive = @"
-        UPDATE Agents 
-        SET agentStatus = 'Active'
-        WHERE contractEndDate >= @CurrentDate AND agentStatus != 'Active'
-    ";
+            _db.Execute(
+                expireAgentsSql,
+                new { CurrentDate = currentDate });
 
-            _db.Execute(sqlExpired, new { CurrentDate = currentDate });
-            _db.Execute(sqlActive, new { CurrentDate = currentDate });
+            // إعادة الوكيل إلى Active فقط عند تجديد عقد كان منتهيًا.
+            // لا نغيّر Blocked أو Freezed إلى Active.
+            const string reactivateRenewedAgentsSql = @"
+UPDATE Agents
+SET agentStatus = 'Active'
+WHERE contractEndDate IS NOT NULL
+  AND contractEndDate >= @CurrentDate
+  AND LTRIM(RTRIM(agentStatus)) = 'Expired';";
+
+            _db.Execute(
+                reactivateRenewedAgentsSql,
+                new { CurrentDate = currentDate });
         }
 
         private AgentViewModel GetAgentById(int agentId, AgentViewModel model)
@@ -2825,24 +2642,24 @@ WHERE a.agentId = @agentId
 
             var agent = new
             {
-                model.agentNameEnglish ,
+                model.agentNameEnglish,
                 model.agentNameArabic,
-            model.nationalId ,
-            model.nationalityId,
+                model.nationalId,
+                model.nationalityId,
                 model.agentCode,
                 model.countryId,
-            model.city ,
-            model.agentEmail,
-            model.agentPhone,
-            model.agentIban ,
-            model.commission,
-            model.contractStartDate,
-            model.contractEndDate ,
-            model.passowrd ,
-            model.notes ,
+                model.city,
+                model.agentEmail,
+                model.agentPhone,
+                model.agentIban,
+                model.commission,
+                model.contractStartDate,
+                model.contractEndDate,
+                model.passowrd,
+                model.notes,
                 agentContract = contractPath,
-       
-            agentId
+
+                agentId
             };
 
             _db.Execute(sql, agent);
@@ -2883,6 +2700,25 @@ userPassword = @userPassword
             TempData["SuccessMessage"] = "Agent deleted successfully!";
             return RedirectToAction("AgentList"); // or whatever your list view is
         }
+        [Authorize(Roles = "Admin,Super Admin")]
+        public Task<IActionResult> AgentStatistics(
+            string search, string health = "all", string intake = "current",
+            int page = 1, int pageSize = 10)
+        {
+            return AgentStatisticsCoreAsync(
+                search, health, intake, page, pageSize,
+                DashboardLanguage.English,
+                "~/Views/En/Admin/AgentStatistics.cshtml");
+        }
+
+        [Authorize(Roles = "Admin,Super Admin")]
+        public Task<IActionResult> ExportAgentStatistics(
+            string search, string health = "all", string intake = "current")
+        {
+            return ExportAgentStatisticsCoreAsync(
+                search, health, intake, DashboardLanguage.English);
+        }
+
     }
 
 

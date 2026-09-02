@@ -15,6 +15,9 @@ using System.Text;
 using System.Threading.Tasks;
 using University_Agent_System.Data;
 using University_Agent_System.Services;
+using University_Agent_System.Services.Agents;
+using University_Agent_System.Services.AgentStatistics;
+using University_Agent_System.Services.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 // Increase form options
@@ -83,7 +86,10 @@ builder.Services.AddScoped
 builder.Services.AddScoped
     <IAdmissionMajorDiscountService,
      AdmissionMajorDiscountService>();
-
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+builder.Services.AddScoped<IAgentManagementService, AgentManagementService>();
+builder.Services.AddScoped<IAgentStatisticsService, AgentStatisticsService>();
 var app = builder.Build();
 
 // Define supported cultures

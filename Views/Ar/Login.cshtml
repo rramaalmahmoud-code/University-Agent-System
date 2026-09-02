@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@model University_Agent_System.Models.ViewModel.LoginViewModel
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
@@ -56,31 +57,93 @@
             <!-- نموذج تسجيل الدخول (متمركز مع طبقة علوية) -->
             <div class="login-container">
                 <div class="login-box">
+
                     <h2 class="heading13">تسجيل الدخول</h2>
-                    <div class="row">
-                        <div class="co-lg-12" style="margin-top:30px">
-                            <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" style="
-   
-">
-                            <div class="rowspacing"></div>
-                            <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" style="
- 
-">
-                            <div class="partspacing"></div>
-                            <div class="btnwrap" style="padding-top: 22px;padding-bottom: 16px;">
-                                <a href="Home.html" target="_blank" class="mybtn heading13" style="background-color: #DAA328;border-radius: 10px 0px 10px 10px;width: 100%;">
-                                    تسجيل الدخول
-                                    <span class="line" style="border-right: 6px solid #252468;border-top: 6px solid #252468;right: -4px;top: -4px;border-bottom: none;border-left: none;"></span>
-                                    <span class="areaborder" style="border: 0px;"></span>
-                                </a>
+
+                    <form method="post"
+                          action="@Url.Action("Login", "Ar")">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-lg-12" style="margin-top:30px">
+
+                                @if (ViewBag.ErrorMessage != null)
+                                {
+                                    <div class="alert alert-danger"
+                                         role="alert"
+                                         style="margin-bottom:20px;">
+                                        @ViewBag.ErrorMessage
+                                    </div>
+                                }
+
+                                <div asp-validation-summary="ModelOnly"
+                                     class="text-danger"
+                                     style="margin-bottom:15px;">
+                                </div>
+
+                                <input asp-for="Username"
+                                       id="username"
+                                       type="text"
+                                       class="form-control"
+                                       placeholder="أدخل اسم المستخدم"
+                                       autocomplete="username" />
+
+                                <span asp-validation-for="Username"
+                                      class="text-danger">
+                                </span>
+
+                                <div class="rowspacing"></div>
+
+                                <input asp-for="Password"
+                                       id="password"
+                                       type="password"
+                                       class="form-control"
+                                       placeholder="أدخل كلمة المرور"
+                                       autocomplete="current-password" />
+
+                                <span asp-validation-for="Password"
+                                      class="text-danger">
+                                </span>
+
+                                <div class="partspacing"></div>
+
+                                <div class="btnwrap"
+                                     style="padding-top:22px;padding-bottom:16px;">
+
+                                    <button type="submit"
+                                            class="mybtn heading13"
+                                            style="
+                                    position:relative;
+                                    background-color:#DAA328;
+                                    border-radius:10px 0 10px 10px;
+                                    width:100%;
+                                    border:0;
+                                    cursor:pointer;">
+
+                                        تسجيل الدخول
+
+                                        <span class="line"
+                                              style="
+                                      border-right:6px solid #252468;
+                                      border-top:6px solid #252468;
+                                      right:-4px;
+                                      top:-4px;
+                                      border-bottom:none;
+                                      border-left:none;">
+                                        </span>
+
+                                        <span class="areaborder"
+                                              style="border:0;">
+                                        </span>
+                                    </button>
+
+                                </div>
                             </div>
-
                         </div>
-                    </div>
-
+                    </form>
                 </div>
             </div>
-
         </div>
     </main>
 

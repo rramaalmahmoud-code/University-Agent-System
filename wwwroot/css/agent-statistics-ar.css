@@ -1,0 +1,109 @@
+﻿/* Arabic RTL overrides. Load after agent-statistics.css. */
+.agent-statistics-page[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+    font-family: Tahoma, Arial, sans-serif;
+}
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-date {
+        text-align: left;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-underline {
+        margin-right: 0;
+        margin-left: auto;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-card > i {
+        right: auto;
+        left: 15px;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-card label {
+        padding-right: 0;
+        padding-left: 30px;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-search i {
+        right: 14px;
+        left: auto;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-search input {
+        padding-right: 40px;
+        padding-left: 12px;
+        text-align: right;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-toolbar select {
+        text-align: right;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-panel-head h2 i {
+        margin-right: 0;
+        margin-left: 7px;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-table th:first-child,
+    .agent-statistics-page[dir="rtl"] .agent-statistics-table td:first-child,
+    .agent-statistics-page[dir="rtl"] .agent-statistics-table th,
+    .agent-statistics-page[dir="rtl"] .agent-statistics-table td {
+        text-align: right;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-notice {
+        padding-right: 45px;
+        padding-left: 30px;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-notice-icon {
+        right: 0;
+        left: auto;
+    }
+
+    .agent-statistics-page[dir="rtl"] .agent-statistics-notice-dot {
+        right: auto;
+        left: 2px;
+    }
+[dir="rtl"] .agent-search-input-wrapper i {
+    left: auto;
+    right: 14px;
+}
+
+[dir="rtl"] .agent-search-input-wrapper input {
+    padding: 10px 40px 10px 14px;
+}
+
+[dir="rtl"] .agent-search-option {
+    text-align: right;
+}
+
+[dir="rtl"] .agent-statistics-row.account-blocked,
+[dir="rtl"] .agent-statistics-row.account-freezed,
+[dir="rtl"] .agent-statistics-row.account-expired,
+[dir="rtl"] .agent-statistics-row.contract-expired-row {
+    border-left: 0;
+    border-right: 4px solid;
+}
+[dir="rtl"] .agent-search-control > .fa-search {
+    left: auto;
+    right: 14px;
+}
+
+[dir="rtl"] .agent-search-control input {
+    padding: 10px 40px 10px 42px;
+}
+
+[dir="rtl"] .agent-search-arrow {
+    right: auto;
+    left: 14px;
+}
+
+[dir="rtl"] .agent-search-option {
+    text-align: right;
+}
+@media (max-width: 720px) {
+    .agent-statistics-page[dir="rtl"] .agent-statistics-heading {
+        align-items: flex-start;
+    }
+}

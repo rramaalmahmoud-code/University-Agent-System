@@ -1,0 +1,73 @@
+﻿/* Arabic/RTL overrides. Load after admin-dashboard.css. */
+.admin-dashboard[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+    font-family: Tahoma, Arial, sans-serif;
+}
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-today {
+        text-align: left;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-title-line {
+        margin-right: 0;
+        margin-left: auto;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-search i {
+        right: 15px;
+        left: auto;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-search input {
+        padding-right: 42px;
+        padding-left: 14px;
+        text-align: right;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-toolbar select {
+        text-align: right;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-stat-icon {
+        right: auto;
+        left: 18px;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-stat-label {
+        padding-right: 0;
+        padding-left: 52px;
+        letter-spacing: 0;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-pipe-box {
+        border-left: 0;
+        border-right: 3px solid var(--dashboard-blue);
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard .admin-dashboard-table th,
+    .admin-dashboard[dir="rtl"] .admin-dashboard-table th,
+    .admin-dashboard[dir="rtl"] .admin-dashboard-table td {
+        text-align: right !important;
+        letter-spacing: 0;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-alert-count,
+    .admin-dashboard[dir="rtl"] .admin-dashboard-agent-score {
+        margin-right: auto;
+        margin-left: 0;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-agent-row small {
+        direction: rtl;
+    }
+
+@media (max-width: 760px) {
+    .admin-dashboard[dir="rtl"] .admin-dashboard-page-head {
+        align-items: flex-start;
+    }
+
+    .admin-dashboard[dir="rtl"] .admin-dashboard-today {
+        text-align: right !important;
+    }
+}

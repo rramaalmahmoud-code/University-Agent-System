@@ -1,419 +1,427 @@
-﻿@model University_Agent_System.Models.ViewModel.StudentListViewModel
+﻿@model University_Agent_System.Models.ViewModel.DashboardHomeViewModel
+@using System
+@using System.Linq
+@using System.Globalization
+
 @{
     Layout = "_LayoutAdminAr";
-    int totalPages = (int)Math.Ceiling((double)Model.PendingTotalCount / Model.PageSize);
+    ViewData["Title"] = "لوحة تحكم الإدارة";
 
+    Func<string, string> statusClass = value =>
+    {
+        var status = (value ?? "").Trim().ToLowerInvariant();
+        if (status == "approved" || status == "accepted") return "approved";
+        if (status == "under review" || status == "review") return "review";
+        if (status == "rejected") return "missing";
+        return "pending";
+    };
+
+    Func<string, string> initials = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "NA";
+        var words = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(words.Take(2).Select(word => char.ToUpperInvariant(word[0])));
+    };
+
+    Func<string, string> statusText = value =>
+    {
+        var status = (value ?? "").Trim().ToLowerInvariant();
+        if (status == "approved" || status == "accepted") return "مقبول";
+        if (status == "under review" || status == "review") return "قيد المراجعة";
+        if (status == "rejected") return "مرفوض";
+        if (status == "pending") return "معلّق";
+        return string.IsNullOrWhiteSpace(value) ? "غير محدد" : value;
+    };
+
+    Func<string, string> healthText = value =>
+    {
+        if (string.Equals(value, "Healthy", StringComparison.OrdinalIgnoreCase)) return "جيد";
+        if (string.Equals(value, "Needs Attention", StringComparison.OrdinalIgnoreCase)) return "يحتاج متابعة";
+        if (string.Equals(value, "Critical", StringComparison.OrdinalIgnoreCase)) return "حرج";
+        return value;
+    };
+
+    var criticalAlerts = Model.Notifications.Count(x => x.Type == "Critical");
+    var warningAlerts = Model.Notifications.Count(x => x.Type == "Warning");
+    var attentionAgents = Model.AgentStatistics.Count(x => x.HealthStatus != "Healthy");
+    var topAgents = Model.AgentStatistics.OrderByDescending(x => x.ApprovalRate)
+        .ThenByDescending(x => x.TotalStudents).Take(4).ToList();
+    var pendingTotalPages = Math.Max(
+        1,
+        (int)Math.Ceiling(Model.PendingTotalCount / (double)Model.PageSize));
+
+    var pendingFromPage = Math.Max(1, Model.CurrentPage - 2);
+    var pendingToPage = Math.Min(pendingTotalPages, Model.CurrentPage + 2);
+
+    var pendingFirstRow = Model.PendingTotalCount == 0
+        ? 0
+        : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+
+    var pendingLastRow = Math.Min(
+        Model.CurrentPage * Model.PageSize,
+        Model.PendingTotalCount);
 }
-<main>
-    <div class="container-fluid padding margin">
 
-        <div class="row">
+<link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/admin-dashboard-ar.css" asp-append-version="true" />
 
-            <div class="col-lg-12">
-                <section id="title-wrapper" style="justify-content: End;">
-
-                    <h1 class="sectiontitle heading7"><p style="text-align: center;"><span style="color: #252468;">الرئيسية</span></p></h1>
-                    <div class="lineright" style="display: block; background-color: #DAA328;"></div>
-                </section>
-
-
-
-            </div>
-
+<div class="admin-dashboard" dir="rtl" lang="ar">
+    <section class="admin-dashboard-page-head">
+        <div class="admin-dashboard-title-wrap">
+            <h1>لوحة تحكم الإدارة</h1>
+            <div class="admin-dashboard-title-line"></div>
+            <p>نظرة شاملة على الوكلاء والطلاب والطلبات والموافقات.</p>
         </div>
+        <div class="admin-dashboard-today"><i class="far fa-calendar"></i> @DateTime.Now.ToString("dddd، dd MMMM yyyy", new CultureInfo("ar-JO"))</div>
+    </section>
 
-    </div>
-@*      <form method="get" asp-action="Home">
-    
-    <div class="container-fluid padding margin" style="background:#d0d0cf">
-
-        <div class="partspacing"></div>
-
-        <div class="row">
-
-
-            <div class="col-lg-2"></div>
-
-            <div class="col-lg-8">
-
-
-                <!-- Flex container لتقريب العناصر بجانب بعض -->
-                <div class="d-flex">
-                    <!-- agent/DropDownList -->
-                    <div class="col-xxl-9 col-xl-9 col-lg-9 p-0" style=" min-width: 70%;">
-                            <input type="text" name="search" value="@Model.SearchTerm" class="form-control" id="studentName" placeholder="بحث بالاسم أو الرقم" style="border-color: #C81589; border-radius: 0rem !important; padding: 0.355rem .75rem;">
-                    </div>
-
-                    <div class="col-xxl-3 col-xl-3 col-lg-3 p-0">
-                        <!-- button search -->
-                        <div class="btnwrap">
-                                <button type="submit" target="_blank" class="mybtn heading15" style="width: 100%; background: #c81589; border-radius: 0rem !important; padding-left: 0px; padding-right: 0px;border: none;">
-                                بحث <i class="fas fa-search"></i>
-                                <span class="line" style="border-left: 6px solid #252468; border-bottom: 6px solid #252468;"></span>
-                                <span class="areaborder" style="border: 0px;"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    <main class="admin-dashboard-main">
+        <form method="get"
+              action="@Url.Action("Home", "AdminAr")"
+              data-dashboard-filter-url="@Url.Action("Home", "AdminAr")"
+              id="dashboardFilterForm"
+              class="admin-dashboard-toolbar">
+            <div class="admin-dashboard-search">
+                <i class="fas fa-search"></i>
+                <input name="search"
+                       id="dashboardSearchInput"
+                       value="@Model.SearchTerm"
+                       type="search"
+                       placeholder="ابحث باسم الطالب أو الرقم أو التخصص أو الحالة أو الوكيل..."
+                       autocomplete="off" />
             </div>
+            <select name="intake"
+                    id="dashboardIntakeSelect"
+                    aria-label="الفصل الأكاديمي">
+                @if (Model.IntakeFilter == "current")
+                {
+                    <option value="current" selected>الفصل الحالي </option>
+                }
+                else
+                {
+                    <option value="current">الفصل الحالي </option>
+                }
+                @if (Model.IntakeFilter == "previous")
+                {
+                    <option value="previous" selected>الفصل السابق </option>
+                }
+                else
+                {
+                    <option value="previous">الفصل السابق </option>
+                }
+                @if (Model.IntakeFilter == "all")
+                {
+                    <option value="all" selected>كل الفصول</option>
+                }
+                else
+                {
+                    <option value="all">كل الفصول</option>
+                }
+            </select>
+            <button class="admin-dashboard-btn admin-dashboard-btn-pink"
+                    id="dashboardSearchSubmit"
+                    type="submit">
+                <i class="fas fa-search"></i> بحث
+            </button>
+            <a class="admin-dashboard-btn admin-dashboard-btn-outline"
+               href="@Url.Action("Home", "AdminAr", new { intake = "all" })">
+                <i class="fas fa-times"></i> مسح
+            </a>
+            <a class="admin-dashboard-btn admin-dashboard-btn-outline"
+               href="@Url.Action("StudentList", "AdminAr", new { search = Model.SearchTerm, intake = Model.IntakeFilter })">
+                <i class="fas fa-filter"></i> قائمة الطلاب
+            </a>
+        </form>
 
+        <section class="admin-dashboard-stats">
+            <article class="admin-dashboard-stat navy">
+                <div class="admin-dashboard-stat-icon"><i class="fas fa-user-tie"></i></div>
+                <div class="admin-dashboard-stat-label">الوكلاء المسجلون</div><div class="admin-dashboard-stat-value">@Model.TotalAgents</div>
+                <div class="admin-dashboard-stat-foot"><i class="fas fa-check-circle"></i> سجلات الوكلاء النشطين</div>
+            </article>
+            <article class="admin-dashboard-stat">
+                <div class="admin-dashboard-stat-icon"><i class="fas fa-user-graduate"></i></div>
+                <div class="admin-dashboard-stat-label">إجمالي الطلاب</div><div class="admin-dashboard-stat-value">@Model.TotalStudents</div>
+                <div class="admin-dashboard-stat-foot"><i class="fas fa-database"></i> السجلات النشطة الحالية</div>
+            </article>
+            <article class="admin-dashboard-stat gold">
+                <div class="admin-dashboard-stat-icon"><i class="fas fa-hourglass-half"></i></div>
+                <div class="admin-dashboard-stat-label">الموافقات المعلقة</div><div class="admin-dashboard-stat-value">@Model.PendingCount</div>
+                <div class="admin-dashboard-stat-foot attention"><i class="fas fa-exclamation-triangle"></i> تتطلب مراجعة الإدارة</div>
+            </article>
+            <article class="admin-dashboard-stat pink">
+                <div class="admin-dashboard-stat-icon"><i class="fas fa-user-check"></i></div>
+                <div class="admin-dashboard-stat-label">تأكيد الطلاب</div><div class="admin-dashboard-stat-value">@Model.StudentConfirmedCount</div>
+                <div class="admin-dashboard-stat-foot attention"><i class="fas fa-file-signature"></i> تم التأكيد من الطلاب</div>
+            </article>
+        </section>
 
+        <section class="admin-dashboard-grid">
+            <div class="admin-dashboard-stack">
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head">
+                        <h2 class="admin-dashboard-panel-title"><i class="fas fa-chart-bar"></i> ملخص حالات الطلبات</h2>
 
-            <div class="col-lg-2"></div>
-
-            <div class="partspacing"></div>
-
-            <div class="        " style="background-size: 100% !important;-webkit-background-size: cover !important;-moz-background-size: cover !important;-o-background-size: cover !important;background-size: cover !important;background-position: center !important;">
-
-                <div class="row">
-                    <div class="row">
-                        <div class="col-lg-2"></div>
-                        <div class="col-lg-8">
-                            <div class="countersection ">
-                                <h2 class="countertitle">
-                                    <p>
-                                        <span class="heading8">
-                                            إجمالي عدد الطلاب للوكيل:
-                                        </span>
-                                    </p>
-                                </h2>
-                                <span class="countercorner" style="  "></span>
-                                <div class="counterposition">
-                                    <div class="counterarea heading5" style="background-color: #264C9F; ">
-                                            <span style="color:inherit;" data-toggle="counterUp">@Model.TotalStudents</span><span></span>
-                                        <span class="counterareacorner" style="  "></span>
-                                    </div>
-                                </div>
-                            </div>
-
+                    </div>
+                    <div class="admin-dashboard-pipeline">
+                        <div class="admin-dashboard-pipeline-numbers">
+                            <div class="admin-dashboard-pipe-box"><strong>@Model.PendingCount</strong><span>معلّق</span></div>
+                            <div class="admin-dashboard-pipe-box"><strong>@Model.UnderReviewCount</strong><span>قيد المراجعة</span></div>
+                            <div class="admin-dashboard-pipe-box"><strong>@Model.RejectedCount</strong><span>مرفوض</span></div>
+                            <div class="admin-dashboard-pipe-box"><strong>@Model.ApprovedCount</strong><span>مقبول</span></div>
                         </div>
-                        <div class="col-lg-2"></div>
+                        <div class="admin-dashboard-bar" aria-label="توزيع حالات الطلبات"><span></span><span></span><span></span><span></span></div>
                     </div>
+                </article>
 
-                    <div class="col-lg-12">
-
-                        <table style="background-color: #fff;">
-
-                            <thead class="table-light">
-                                <tr style="background: #ecebea">
-
-                                    <th>اسم الطالب</th>
-                                    <th>الكود</th>
-                                    <th>التخصص</th>
-                                    <th>اسم الوكيل</th>
-                                    <th>الموافقة من الطالب</th>
-
-                                    <th>الحالة</th>
-                                    <th> </th>
-
-                                </tr>
-                            </thead>
-
-
-                                <tbody>
-
-
-                                    @foreach (var student in Model.Students)
-                                    {
-                                        <tr>
-                                            <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
-                                            <td data-label="Code" class="readsub">@student.studentCode</td>
-                                            <td data-label="Major" class="readsub">@student.Major_Name</td>
-                                            <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
-                                            <td data-label="Approved By Student" class="readsub">@(student.approvedByStudent ? "نعم" : "لا")</td>
-                                            <td data-label="Status" class="status-positive">@student.statusArabic</td>
-                                            <td data-label="" class="heading16 readsub">
-                                                <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
-                                            
-
-
-                                            </td>
-                                        </tr>
-                                    }
-
-
-                                </tbody>
-                            </table>
-
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head">
+                        <h2 class="admin-dashboard-panel-title"><i class="fas fa-history"></i> أحدث طلبات الطلاب</h2>
+                        <a class="admin-dashboard-view-link"
+                           href="@Url.Action("StudentList", "AdminAr", new { intake = Model.IntakeFilter })">عرض كل الطلبات</a>
                     </div>
-
-                </div>
-                <div class="row">
-                    <div class="col-lg-4"></div>
-                    <div class="col-lg-4">
-                        <div class="btnwrap" style=" min-width: 60%;">
-                                <a href="@Url.Action("Filter", "AdminAr", new { agentId = Model.agentId, agentName = Model.agentName })" target="_blank" class="mybtn heading15" style=" background-color: #daa328; width: 90% ">
-                                تصفية المزيد
-
-                            </a>
-                        </div>
-
-                    </div>
-                    <div class="col-lg-4"></div>
-                </div>
-
-            </div>
-        </div>
-        <div class="partspacing"></div>
-    </div>
-    </form>
- *@   
- <form method="get" asp-action="Home" id="homeForm">
-
-        <div class="container-fluid padding margin" style="background:#d0d0cf">
-
-            <div class="partspacing"></div>
-
-            <div class="row">
-
-                <div class="col-lg-2"></div>
-
-                <div class="col-lg-8">
-
-                    <!-- Flex container -->
-                    <div class="d-flex gap-2" style="align-items:flex-start;">
-
-                        <!-- ✅ Agent Search Dropdown (keeps name="search") -->
-                        <div class="col-xxl-9 col-xl-9 col-lg-9 p-0 position-relative" style="min-width:70%;">
-                            <input type="search"
-                                   name="search"
-                                   value="@Model.SearchTerm"
-                                   class="form-control"
-                                   id="agentSearchHome"
-                                   placeholder="ابحث واختر الوكيل..."
-                                   autocomplete="off"
-                                   onkeyup="filterAgentHome()"
-                                   style="border-color:#C81589; border-radius:0rem !important; padding:0.355rem .75rem;" />
-
-                            <!-- Dropdown Options -->
-                            <ul id="agentOptionsHome"
-                                class="list-group mt-2"
-                                style="display:none; position:absolute; z-index:9999; width:100%; max-height:260px; overflow:auto;">
-                                @foreach (var agent in Model.Agents)
+                    <div class="admin-dashboard-table-wrap">
+                        <table id="dashboardApplicationsTable" class="admin-dashboard-table">
+                            <thead><tr><th>الطالب</th><th>الكود</th><th>التخصص</th><th>الوكيل</th><th>التأكيد</th><th>الحالة</th><th></th></tr></thead>
+                            <tbody>
+                                @foreach (var student in Model.LatestStudents)
                                 {
-                                    <li class="list-group-item agent-item-home"
-                                        data-name="@agent.agentNameArabic"
-                                        style="cursor:pointer;">
-                                        @agent.agentNameArabic
-                                    </li>
-                                }
-                            </ul>
-                        </div>
-
-                        <!-- button search (optional لأن الاختيار يعمل submit تلقائي، لكن نخليه) -->
-                        <div class="col-xxl-3 col-xl-3 col-lg-3 p-0">
-                            <div class="btnwrap">
-                                <button type="submit"
-                                        class="mybtn heading15"
-                                        style="width:100%; background:#c81589; border-radius:0rem !important; padding-left:0; padding-right:0; border:none;">
-                                    بحث <i class="fas fa-search"></i>
-                                    <span class="line" style="border-left:6px solid #252468; border-bottom:6px solid #252468;"></span>
-                                    <span class="areaborder" style="border:0px;"></span>
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <div class="col-lg-2"></div>
-
-                <div class="partspacing"></div>
-
-                <div class="" style="background-size:100% !important;-webkit-background-size:cover !important;-moz-background-size:cover !important;-o-background-size:cover !important;background-size:cover !important;background-position:center !important;">
-
-                    <div class="row">
-                        <div class="row">
-                            <div class="col-lg-2"></div>
-                            <div class="col-lg-8">
-                                <div class="countersection ">
-                                    <h2 class="countertitle">
-                                        <p>
-                                            <span class="heading8">
-                                                إجمالي عدد الطلاب للوكيل:
-                                            </span>
-                                        </p>
-                                    </h2>
-                                    <span class="countercorner"></span>
-                                    <div class="counterposition">
-                                        <div class="counterarea heading5" style="background-color:#264C9F;">
-                                            <span style="color:inherit;" data-toggle="counterUp">@Model.TotalStudents</span><span></span>
-                                            <span class="counterareacorner"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div class="col-lg-2"></div>
-                        </div>
-
-                        <div class="col-lg-12">
-
-                            <table style="background-color:#fff;">
-
-                                <thead class="table-light">
-                                    <tr style="background:#ecebea">
-                                        <th>اسم الطالب</th>
-                                        <th>الكود</th>
-                                        <th>التخصص</th>
-                                        <th>اسم الوكيل</th>
-                                        <th>الموافقة من الطالب</th>
-                                        <th>الحالة</th>
-                                        <th></th>
+                                    <tr>
+                                        <td><div class="admin-dashboard-person"><span class="admin-dashboard-person-mark">@initials(student.studentNameArabic)</span>@student.studentNameArabic</div></td>
+                                        <td>@student.studentCode</td>
+                                        <td>@student.Major_Name</td>
+                                        <td>@student.agentNameArabic</td>
+                                        <td>@(student.approvedByStudent ? "نعم" : "لا")</td>
+                                        <td><span class="admin-dashboard-status @statusClass(student.statusEnglish)">@statusText(student.statusEnglish)</span></td>
+                                        <td><a class="admin-dashboard-more" href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })">مراجعة</a></td>
                                     </tr>
-                                </thead>
-
-                                <tbody>
-                                    @foreach (var student in Model.Students)
-                                    {
-                                        <tr>
-                                            <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
-                                            <td data-label="Code" class="readsub">@student.studentCode</td>
-                                            <td data-label="Major" class="readsub">@student.Major_Name</td>
-                                            <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
-                                            <td data-label="Approved By Student" class="readsub">@(student.approvedByStudent ? "نعم" : "لا")</td>
-                                            <td data-label="Status" class="status-positive">@student.statusArabic</td>
-                                            <td data-label="" class="heading16 readsub">
-                                                <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
+                                }
+                            </tbody>
+                        </table>
+                        <div class="admin-dashboard-empty-message" id="dashboardEmptyMessage">لم يتم العثور على طالب أو وكيل مطابق.</div>
                     </div>
+                </article>
 
-                    <div class="row">
-                        <div class="col-lg-4"></div>
-                        <div class="col-lg-4">
-                            <div class="btnwrap" style="min-width:60%;">
-                                <a href="@Url.Action("Filter", "AdminAr", new { agentId = Model.agentId, agentName = Model.agentName })"
-                                   target="_blank"
-                                   class="mybtn heading15"
-                                   style="background-color:#daa328; width:90%;">
-                                    تصفية المزيد
-                                </a>
-                            </div>
-
-                        </div>
-                        <div class="col-lg-4"></div>
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head">
+                        <h2 class="admin-dashboard-panel-title"><i class="fas fa-star"></i> أداء الوكلاء</h2>
+                        <a class="admin-dashboard-view-link"
+                           href="@Url.Action("AgentStatistics", "AdminAr", new { intake = Model.IntakeFilter })">تقرير الأداء الكامل</a>
                     </div>
+                    <div class="admin-dashboard-table-wrap">
+                        <table id="dashboardAgentsTable" class="admin-dashboard-table">
+                            <thead><tr><th>الوكيل</th><th>الطلاب</th><th>معلّق</th><th>مقبول</th><th>مرفوض</th><th>نسبة القبول</th><th>الحالة</th> <th>حالة الحساب</th></tr></thead>
+                            <tbody>
+                                @foreach (var agent in Model.AgentStatistics.Take(5))
+                                {
+                                    <tr>
+                                        <td><div class="admin-dashboard-person"><span class="admin-dashboard-person-mark">@initials(agent.AgentName)</span>@agent.AgentName</div></td>
+                                        <td>@agent.TotalStudents</td>
+                                        <td>@agent.PendingCount</td>
+                                        <td>@agent.ApprovedCount</td>
+                                        <td>@agent.RejectedCount</td>
+                                        <td><strong class="admin-dashboard-conversion">@agent.ApprovalRate.ToString("0.0")%</strong></td>
+                                        <td><span class="admin-dashboard-health @agent.HealthCssClass">@healthText(agent.HealthStatus)</span></td>
+                                        <td>
+                                            <span class="agent-account-status @agent.AccountStatusCssClass">
+                                                @agent.AccountStatusDisplay
+                                            </span>
 
-                </div>
+                                            @if (agent.IsContractExpired)
+                                            {
+                                                <small class="agent-contract-ended">
+                                                    انتهى بتاريخ
+                                                    @agent.ContractEndDate?.ToString("dd/MM/yyyy")
+                                                </small>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
             </div>
 
-            <div class="partspacing"></div>
-        </div>
+            <aside class="admin-dashboard-stack">
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head">
+                        <h2 class="admin-dashboard-panel-title"><i class="fas fa-bell"></i> يتطلب الانتباه</h2>
+                        <span class="admin-dashboard-view-link">@Model.Notifications.Count تنبيهات</span>
+                    </div>
+                    <div class="admin-dashboard-alerts">
+                        <div class="admin-dashboard-alert-item"><div class="admin-dashboard-alert-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="admin-dashboard-alert-copy"><strong>تنبيهات الوكلاء الحرجة</strong><span>يوصى بمراجعة الإدارة فورًا</span></div><div class="admin-dashboard-alert-count">@criticalAlerts</div></div>
+                        <div class="admin-dashboard-alert-item"><div class="admin-dashboard-alert-icon gold"><i class="fas fa-clock"></i></div><div class="admin-dashboard-alert-copy"><strong>تنبيهات الوكلاء التحذيرية</strong><span>راجع ضغط العمل ونسب الرفض</span></div><div class="admin-dashboard-alert-count">@warningAlerts</div></div>
+                        <div class="admin-dashboard-alert-item"><div class="admin-dashboard-alert-icon blue"><i class="fas fa-user-clock"></i></div><div class="admin-dashboard-alert-copy"><strong>وكلاء يحتاجون إلى متابعة</strong><span>حالة الأداء ليست جيدة حاليًا</span></div><div class="admin-dashboard-alert-count">@attentionAgents</div></div>
+                        <div class="admin-dashboard-alert-item"><div class="admin-dashboard-alert-icon"><i class="fas fa-hourglass-half"></i></div><div class="admin-dashboard-alert-copy"><strong>طلبات الطلاب المعلقة</strong><span>طلبات بانتظار اتخاذ قرار</span></div><div class="admin-dashboard-alert-count">@Model.PendingCount</div></div>
+                    </div>
+                </article>
 
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head"><h2 class="admin-dashboard-panel-title"><i class="fas fa-bolt"></i> إجراءات سريعة</h2></div>
+                    <div class="admin-dashboard-quick-actions">
+                        <a class="admin-dashboard-quick-action" href="@Url.Action("AddAgent", "AdminAr")"><i class="fas fa-user-plus"></i>إضافة وكيل جديد</a>
+                        <a class="admin-dashboard-quick-action" href="#pendingRequests"><i class="fas fa-user-check"></i>مراجعة الموافقات</a>
+                        <a class="admin-dashboard-quick-action" href="@Url.Action("Index", "AdmissionMajors")"><i class="fas fa-graduation-cap"></i>إدارة التخصصات</a>
+@*                         <a class="admin-dashboard-quick-action" href="@Url.Action("AddStudent", "Ar")"><i class="fas fa-graduation-cap"></i>إضافة طالب جديد</a>
 
-        <!-- ✅ JavaScript for agent search dropdown -->
+ *@    
+@if (User.IsInRole("Super Admin"))
+                        {
+                            <a class="admin-dashboard-quick-action"
+                               href="@Url.Action("AddStudent", "Ar")">
+                                <i class="fas fa-user-plus"></i>
+                                إضافة طالب جديد
+                            </a>
+                        }
+</div>
+                </article>
 
-    </form>
+                <article class="admin-dashboard-panel">
+                    <div class="admin-dashboard-panel-head"><h2 class="admin-dashboard-panel-title"><i class="fas fa-trophy"></i> أفضل الوكلاء</h2>
+                        <a class="admin-dashboard-view-link"
+                           href="@Url.Action("AgentStatistics", "AdminAr", new { intake = Model.IntakeFilter })">التفاصيل</a>
+                    </div>
+                    <div class="admin-dashboard-agent-list">
+                        @foreach (var agent in topAgents)
+                        {
+                            <div class="admin-dashboard-agent-row"><div><a href="@Url.Action("StudentList", "AdminAr", new { agentId = agent.AgentId, intake = Model.IntakeFilter })"><strong>@agent.AgentName</strong><small>@agent.TotalStudents طالب · نسبة القبول @agent.ApprovalRate.ToString("0.0")%</small></a></div><div class="admin-dashboard-agent-score">@agent.ApprovedCount</div></div>
+                        }
+                    </div>
+                </article>
+            </aside>
+        </section>
 
- <div class="container-fluid padding margin">
-        <div class="row">
-
-            <div class="col-lg-12">
-                <h2 class="heading14">الطلبات قيد التنفيذ</h2>
-                <table style="background-color: #fff;">
-
-                    <thead class="table-light">
-                        <tr style="background: #ecebea">
-
-                            <th>اسم الطالب</th>
-                            <th>الكود</th>
-                            <th>التخصص</th>
-                            <th>اسم الوكيل</th>
-                            <th>الحالة</th>
-                            <th> </th>
-
-                        </tr>
-                    </thead>
-
-
+        <section class="admin-dashboard-panel admin-dashboard-pending-panel" id="pendingRequests">
+            <div class="admin-dashboard-panel-head"><h2 class="admin-dashboard-panel-title"><i class="fas fa-hourglass-half"></i> الطلبات المعلقة</h2><span class="admin-dashboard-view-link">@Model.PendingTotalCount طلبات</span></div>
+            <div class="admin-dashboard-table-wrap">
+                <table class="admin-dashboard-table">
+                    <thead><tr><th>الطالب</th><th>الكود</th><th>التخصص</th><th>الوكيل</th><th>الحالة</th> <th></th></tr></thead>
                     <tbody>
-
                         @foreach (var student in Model.PendingStudents)
                         {
-                            <tr>
-
-                                <td data-label="Student Name" class="readsub">@student.studentNameArabic</td>
-                                <td data-label="Code" class="readsub">@student.studentCode</td>
-                                <td data-label="Major" class="readsub">@student.Major_Name</td>
-                                <td data-label="Agent Name" class="readsub">@student.agentNameArabic</td>
-                                <td data-label="Status" class="status-positive">@student.statusArabic</td>
-
-
-                                <td data-label="" class="heading16 readsub">
-
-                                    <a href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })" target="_blank">المزيد...</a>
-
-                                </td>
-                            </tr>
+                            <tr><td><div class="admin-dashboard-person"><span class="admin-dashboard-person-mark">@initials(student.studentNameArabic)</span>@student.studentNameArabic</div></td><td>@student.studentCode</td><td>@student.Major_Name</td><td>@student.agentNameArabic</td><td><span class="admin-dashboard-status pending">@statusText(student.statusEnglish)</span></td><td><a class="admin-dashboard-more" href="@Url.Action("StudentInfo", "AdminAr", new { studentId = student.studentId })">مراجعة</a></td></tr>
                         }
-
-
-
                     </tbody>
                 </table>
-                <nav aria-label="Page navigation example">
-                    <ul class="pagination" style="justify-content: center; align-items: center;">
-                        @for (int i = 1; i <= totalPages; i++)
-                        {
-                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                <a class="page-link" href="@Url.Action("Home", new { page = i, search = Model.SearchTerm })">@i</a>
-                            </li>
-                        }
-                    </ul>
-                </nav>
-
             </div>
 
-        </div>
-    </div>
-</main>
-<script>
-    function filterAgentHome() {
-        var input = document.getElementById('agentSearchHome');
-        var filter = (input.value || "").toUpperCase();
-        var list = document.getElementById('agentOptionsHome');
-        var items = list.getElementsByTagName('li');
+            @if (pendingTotalPages > 1)
+            {
+                <nav class="admin-dashboard-pagination"
+                     aria-label="صفحات الطلبات المعلقة">
 
-        list.style.display = input.value.trim().length > 0 ? "block" : "none";
+                    <span class="admin-dashboard-pagination-summary">
+                        عرض @pendingFirstRow-@pendingLastRow
+                        من أصل @Model.PendingTotalCount
+                    </span>
 
-        for (var i = 0; i < items.length; i++) {
-            var txtValue = items[i].textContent || items[i].innerText;
-            items[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
-        }
-    }
+                    <div class="admin-dashboard-pagination-buttons">
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var list = document.getElementById('agentOptionsHome');
-        var input = document.getElementById('agentSearchHome');
-        var form = document.getElementById('homeForm');
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a class="admin-dashboard-page-button"
+                               href="@Url.Action(
+                                                      "Home",
+                                                      "AdminAr",
+                                                      new
+                                                      {
+                                                          search = Model.SearchTerm,
+                                                          intake = Model.IntakeFilter,
+                                                          page = Model.CurrentPage - 1,
+                                                          pageSize = Model.PageSize
+                                                      })#pendingRequests">
+                        السابق
+                    </a>
+                                        }
 
-        // click select
-        list.addEventListener('click', function (e) {
-            if (e.target && e.target.matches('.agent-item-home')) {
-                var agentName = e.target.getAttribute('data-name') || e.target.innerText;
+                        @for (var pageNumber = pendingFromPage;
+                                            pageNumber <= pendingToPage;
+                                            pageNumber++)
+                        {
+                            if (pageNumber == Model.CurrentPage)
+                            {
+                                <span class="admin-dashboard-page-button active"
+                                      aria-current="page">
+                                    @pageNumber
+                                </span>
+                            }
+                            else
+                            {
+                                <a class="admin-dashboard-page-button"
+                                   href="@Url.Action(
+                                                              "Home",
+                                                              "AdminAr",
+                                                              new
+                                                              {
+                                                                  search = Model.SearchTerm,
+                                                                  intake = Model.IntakeFilter,
+                                                                  page = pageNumber,
+                                                                  pageSize = Model.PageSize
+                                                              })#pendingRequests">
+                        @pageNumber
+                    </a>
+                                        }
+                        }
 
-                // ✅ keep your old backend logic (search by agent name)
-                input.value = agentName;
+                        @if (Model.CurrentPage < pendingTotalPages)
+                        {
+                            <a class="admin-dashboard-page-button"
+                               href="@Url.Action(
+                                                      "Home",
+                                                      "AdminAr",
+                                                      new
+                                                      {
+                                                          search = Model.SearchTerm,
+                                                          intake = Model.IntakeFilter,
+                                                          page = Model.CurrentPage + 1,
+                                                          pageSize = Model.PageSize
+                                                      })#pendingRequests">
+                        التالي
+                    </a>
+                                        }
 
-                list.style.display = "none";
-
-                // ✅ auto submit to load students
-                form.submit();
+                    </div>
+                </nav>
             }
-        });
+        </section>
+    </main>
+</div>
 
-        // hide dropdown if click outside
-        document.addEventListener('click', function (e) {
-            var isInside = input.contains(e.target) || list.contains(e.target);
-            if (!isInside) list.style.display = "none";
-        });
-    });
+<script>
+    (function () {
+        "use strict";
+
+        function initializeDashboardFilters() {
+            var form = document.getElementById("dashboardFilterForm");
+            var searchInput = document.getElementById("dashboardSearchInput");
+            var intakeSelect = document.getElementById("dashboardIntakeSelect");
+
+            if (!form || !searchInput || !intakeSelect) return;
+
+            function navigateToFilteredDashboard(event) {
+                if (event) event.preventDefault();
+
+                var baseUrl = form.getAttribute("data-dashboard-filter-url") || form.action;
+                var parameters = new URLSearchParams();
+                var search = (searchInput.value || "").trim();
+                var intake = intakeSelect.value || "current";
+
+                if (search.length > 0) parameters.set("search", search);
+                parameters.set("intake", intake);
+                parameters.set("page", "1");
+
+                window.location.assign(baseUrl + "?" + parameters.toString());
+            }
+
+            form.addEventListener("submit", navigateToFilteredDashboard);
+            intakeSelect.addEventListener("change", navigateToFilteredDashboard);
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initializeDashboardFilters);
+        } else {
+            initializeDashboardFilters();
+        }
+    })();
 </script>

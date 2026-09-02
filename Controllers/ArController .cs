@@ -1543,18 +1543,19 @@ WHERE studentId = @studentId;
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.Now.AddDays(7)
+                Expires = DateTimeOffset.Now.AddDays(2)
             });
 
             // Step 5: Redirect based on user type
             switch (user.UserType.userTypeEnglish)
             {
                 case "Super Admin":
-                    return RedirectToAction("Home", "AdminEn");
                 case "Admin":
-                    return RedirectToAction("Home", "AdminEn");
+                    return RedirectToAction("Home", "AdminAr");
+
                 case "Agent":
-                    return RedirectToAction("StudentList", "AdminEn");
+                    return RedirectToAction("StudentList", "AdminAr");
+
                 default:
                     return View();
             }

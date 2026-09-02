@@ -1,0 +1,494 @@
+﻿@model University_Agent_System.Models.ViewModel.AgentStatisticsPageVM
+@using System
+@using System.Linq
+@using System.Globalization
+
+@{
+    Layout = "_LayoutAdminAr";
+    ViewData["Title"] = "إحصائيات الوكلاء";
+
+    Func<DateTime?, string> activityText = value =>
+    {
+        if (!value.HasValue) return "لا يوجد نشاط";
+        var elapsed = DateTime.Now - value.Value;
+        if (elapsed.TotalMinutes < 60) return $"منذ {Math.Max(1, (int)elapsed.TotalMinutes)} دقيقة";
+        if (elapsed.TotalHours < 24) return $"منذ {Math.Max(1, (int)elapsed.TotalHours)} ساعة";
+        if (elapsed.TotalDays < 2) return "أمس";
+        return $"منذ {Math.Max(2, (int)elapsed.TotalDays)} يومًا";
+    };
+
+    Func<string, string> healthText = value =>
+    {
+        if (value == "Healthy") return "جيد";
+        if (value == "Needs Attention") return "يحتاج متابعة";
+        if (value == "Critical") return "حرج";
+        if (value == "Inactive") return "غير نشط";
+        return value;
+    };
+
+    Func<string, string> severityText = value => value == "Critical" ? "حرج" : "تحذير";
+
+}
+
+<link rel="stylesheet" href="~/css/agent-statistics.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/agent-statistics-ar.css" asp-append-version="true" />
+
+<div class="agent-statistics-page" dir="rtl" lang="ar">
+    <section class="agent-statistics-heading">
+        <div>
+            <h1>إحصائيات الوكلاء</h1>
+            <div class="agent-statistics-underline"></div>
+            <p>متابعة طلاب كل وكيل ونتائج الطلبات والحالات التي تتطلب تدخل الإدارة.</p>
+        </div>
+        <div class="agent-statistics-date">
+            <i class="far fa-calendar"></i> @DateTime.Now.ToString("dddd، dd MMMM yyyy", new CultureInfo("ar-JO"))
+        </div>
+    </section>
+
+    <main class="agent-statistics-main">
+        <section class="agent-statistics-summary">
+            <article class="agent-statistics-card">
+                <i class="fas fa-user-tie"></i><label>إجمالي الوكلاء</label>
+                <strong>@Model.TotalAgents</strong>
+                <small>@Model.ActiveAgents نشط · @Model.InactiveAgents غير نشط</small>
+            </article>
+            <article class="agent-statistics-card">
+                <i class="fas fa-user-graduate"></i><label>إجمالي الطلاب</label>
+                <strong>@Model.TotalStudents</strong><small>ضمن الفصل المحدد</small>
+            </article>
+            <article class="agent-statistics-card">
+                <i class="fas fa-hourglass-half"></i><label>إجمالي المعلق</label>
+                <strong>@Model.TotalPending</strong>
+                <small>@(Model.TotalStudents == 0 ? "0.0" : (Model.TotalPending * 100m / Model.TotalStudents).ToString("0.0"))% من الطلبات</small>
+            </article>
+            <article class="agent-statistics-card">
+                <i class="fas fa-circle-check"></i><label>إجمالي المقبول</label>
+                <strong>@Model.TotalApproved</strong>
+                <small>@(Model.TotalStudents == 0 ? "0.0" : (Model.TotalApproved * 100m / Model.TotalStudents).ToString("0.0"))% من الطلبات</small>
+            </article>
+            <article class="agent-statistics-card">
+                <i class="fas fa-bell"></i><label>وكلاء يحتاجون متابعة</label>
+                <strong>@Model.AgentsNeedAttention</strong><small>وفقًا لقواعد التنبيهات</small>
+            </article>
+        </section>
+
+        <form method="get"
+              action="@Url.Action("AgentStatistics", "AdminAr")"
+              id="agentStatisticsFilterForm"
+              class="agent-statistics-toolbar">
+@*             <div class="agent-statistics-search">
+                <i class="fas fa-search"></i>
+                <input name="search" value="@Model.SearchTerm" type="search"
+                       placeholder="ابحث باسم الوكيل أو الكود أو المدينة أو رقم الدولة أو البريد..." />
+            </div>
+ *@           
+            
+<div class="agent-search-picker" id="agentSearchPicker">
+                <div class="agent-search-control">
+                    <i class="fas fa-search"></i>
+
+                    <input type="text"
+                           id="agentSearchInput"
+                           name="search"
+                           value="@Model.SearchTerm"
+                           placeholder="ابحث واختر الوكيل..."
+                           autocomplete="off" />
+
+                    <i class="fas fa-chevron-down agent-search-arrow"></i>
+                </div>
+
+                <div class="agent-search-options" id="agentSearchOptions">
+                    @if (Model.AgentOptions != null && Model.AgentOptions.Any())
+                    {
+                        foreach (var option in Model.AgentOptions)
+                        {
+                            var statusClass = option.AccountStatus switch
+                            {
+                                "Blocked" => "account-blocked",
+                                "Freezed" => "account-freezed",
+                                "Expired" => "account-expired",
+                                "Inactive" => "account-inactive",
+                                _ => "account-active"
+                            };
+
+                            <button type="button"
+                                    class="agent-search-option"
+                                    data-agent-name="@option.AgentName"
+                                    data-search-text="@($"{option.AgentName} {option.AgentCode} {option.AccountStatus}")">
+
+                                <span class="agent-search-option-name">
+                                    @option.AgentName
+                                </span>
+
+                                <span class="agent-search-option-code">
+                                    #@(option.AgentCode?.ToString() ?? "-")
+                                </span>
+
+                                <span class="agent-mini-status @statusClass">
+                                    @option.AccountStatus
+                                </span>
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="agent-search-no-data">
+                            لا يوجد وكلاء
+                        </div>
+                    }
+
+                    <div class="agent-search-no-results" id="agentSearchNoResults">
+                        لا يوجد وكلاء مطابقون
+                    </div>
+                </div>
+            </div>
+            <select name="health" aria-label="حالة أداء الوكيل">
+                @if (Model.HealthFilter == "all")
+                {
+                    <option value="all" selected>كل حالات الوكلاء</option>
+                }
+                else
+                {
+                    <option value="all">كل حالات الوكلاء</option>
+                }
+                @if (Model.HealthFilter == "healthy")
+                {
+                    <option value="healthy" selected>جيد</option>
+                }
+                else
+                {
+                    <option value="healthy">جيد</option>
+                }
+                @if (Model.HealthFilter == "attention")
+                {
+                    <option value="attention" selected>يحتاج متابعة</option>
+                }
+                else
+                {
+                    <option value="attention">يحتاج متابعة</option>
+                }
+                @if (Model.HealthFilter == "critical")
+                {
+                    <option value="critical" selected>حرج</option>
+                }
+                else
+                {
+                    <option value="critical">حرج</option>
+                }
+                @if (Model.HealthFilter == "inactive")
+                {
+                    <option value="inactive" selected>غير نشط</option>
+                }
+                else
+                {
+                    <option value="inactive">غير نشط</option>
+                }
+            </select>
+            <select name="intake" id="agentStatisticsIntake" aria-label="الفصل الأكاديمي">
+                @if (Model.IntakeFilter == "current")
+                {
+                    <option value="current" selected>الفصل الحالي </option>
+                }
+                else
+                {
+                    <option value="current">الفصل الحالي </option>
+                }
+                @if (Model.IntakeFilter == "previous")
+                {
+                    <option value="previous" selected>الفصل السابق </option>
+                }
+                else
+                {
+                    <option value="previous">الفصل السابق </option>
+                }
+                @if (Model.IntakeFilter == "all")
+                {
+                    <option value="all" selected>كل الفصول</option>
+                }
+                else
+                {
+                    <option value="all">كل الفصول</option>
+                }
+            </select>
+            <input type="hidden" name="page" value="1" />
+            <input type="hidden" name="pageSize" value="@Model.PageSize" />
+            <button class="agent-statistics-btn pink" type="submit"><i class="fas fa-filter"></i> تطبيق</button>
+            <a class="agent-statistics-btn gold"
+               href="@Url.Action("ExportAgentStatistics", "AdminAr", new { search = Model.SearchTerm, health = Model.HealthFilter, intake = Model.IntakeFilter })">
+                <i class="fas fa-file-export"></i> تصدير
+            </a>
+            <a class="agent-statistics-btn outline" href="@Url.Action("AgentStatistics", "AdminAr", new { intake = "all" })">
+                <i class="fas fa-times"></i> مسح
+            </a>
+        </form>
+
+        <section class="agent-statistics-layout">
+            <article class="agent-statistics-panel">
+                <div class="agent-statistics-panel-head">
+                    <h2><i class="fas fa-chart-column"></i> أداء جميع الوكلاء</h2>
+                    <span>@Model.TotalFilteredAgents وكلاء</span>
+                </div>
+                <div class="agent-statistics-table-wrap">
+                    <table class="agent-statistics-table">
+                        <thead>
+                            <tr>
+                                <th>الوكيل</th>
+                                <th>إجمالي الطلاب</th>
+                                <th>جديد</th>
+                                <th>معلق</th>
+                                <th>قيد المراجعة</th>
+                                <th>مقبول</th>
+                                <th>مرفوض</th>
+                                <th>وثائق ناقصة</th>
+                                <th>نسبة القبول</th>
+                                <th>آخر نشاط</th>
+                                <th>حالة الأداء</th>
+                                <th>حالة حساب الوكيل</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var agent in Model.Agents)
+                            {
+                                <tr class="agent-statistics-row
+               @agent.AccountStatusCssClass
+               @(agent.IsContractExpired ? "contract-expired-row" : "")">
+                                    <td class="agent-statistics-name">
+                                        @agent.AgentName
+                                        <small>
+                                            AG-@agent.AgentCode · @(string.IsNullOrWhiteSpace(agent.AgentCity) ? "غير محدد" : agent.AgentCity)
+                                            · @(string.IsNullOrWhiteSpace(agent.AgentEmail) ? "لا يوجد بريد" : agent.AgentEmail)
+                                        </small>
+                                    </td>
+                                    <td class="agent-statistics-num">@agent.TotalStudents</td>
+                                    <td>@agent.NewCount</td>
+                                    <td class="agent-statistics-num pending" title="@agent.OldPendingCount طلبًا أقدم من 3 أيام">@agent.PendingCount</td>
+                                    <td>@agent.UnderReviewCount</td>
+                                    <td class="agent-statistics-num approved">@agent.ApprovedCount</td>
+                                    <td class="agent-statistics-num rejected">@agent.RejectedCount</td>
+                                    <td>@agent.MissingDocumentsCount</td>
+                                    <td><span class="agent-statistics-rate @(agent.ApprovalRate < 50 ? "low" : "")">@agent.ApprovalRate.ToString("0.0")%</span></td>
+                                    <td>@activityText(agent.LastActivityAt)</td>
+                                    <td><span class="agent-statistics-badge @agent.HealthCssClass">@healthText(agent.HealthStatus)</span></td>
+                                    <td>
+                                        <span class="agent-account-status @agent.AccountStatusCssClass">
+                                            @agent.AccountStatusDisplay
+                                        </span>
+
+                                        @if (agent.IsContractExpired)
+                                        {
+                                            <small class="agent-contract-ended">
+                                                @(agent.ContractEndDate?.ToString("dd/MM/yyyy"))
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a class="agent-statistics-open"
+                                           href="@Url.Action("Filter", "AdminAr",
+                                                      new
+                                                      {
+                                                          agentId = agent.AgentId,
+                                                          agentName = agent.AgentName
+                                                      })">
+                                        التفاصيل
+                                    </a>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    @if (!Model.Agents.Any())
+                    {
+                        <div class="agent-statistics-no-results">لا يوجد وكلاء مطابقون لعوامل التصفية المحددة.</div>
+                    }
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="agent-statistics-pagination" aria-label="Agents pages">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a href="@Url.Action("AgentStatistics", "AdminAr", new { search = Model.SearchTerm, health = Model.HealthFilter, intake = Model.IntakeFilter, page = Model.CurrentPage - 1, pageSize = Model.PageSize })">›</a>
+                        }
+                        @for (var pageNumber = Math.Max(1, Model.CurrentPage - 2); pageNumber <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); pageNumber++)
+                        {
+                            <a class="@(pageNumber == Model.CurrentPage ? "active" : "")"
+                               href="@Url.Action("AgentStatistics", "AdminAr", new { search = Model.SearchTerm, health = Model.HealthFilter, intake = Model.IntakeFilter, page = pageNumber, pageSize = Model.PageSize })">@pageNumber</a>
+                        }
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a href="@Url.Action("AgentStatistics", "AdminAr", new { search = Model.SearchTerm, health = Model.HealthFilter, intake = Model.IntakeFilter, page = Model.CurrentPage + 1, pageSize = Model.PageSize })">‹</a>
+                        }
+                    </nav>
+                }
+            </article>
+
+            <aside class="agent-statistics-notice-column">
+                <article class="agent-statistics-panel">
+                    <div class="agent-statistics-panel-head">
+                        <h2><i class="fas fa-bell"></i> التنبيهات</h2>
+                        <button type="button" id="agentStatisticsMarkRead">تحديد الكل كمقروء</button>
+                    </div>
+                    <div class="agent-statistics-notification-summary">
+                        <div><strong id="agentStatisticsUnread">@Model.Notifications.Count</strong><small>غير مقروء</small></div>
+                        <div><strong>@Model.CriticalNotifications</strong><small>حرج</small></div>
+                        <div><strong>@Model.WarningNotifications</strong><small>تحذيرات</small></div>
+                    </div>
+                    <div class="agent-statistics-notice-list" id="agentStatisticsNoticeList">
+                        @foreach (var notice in Model.Notifications)
+                        {
+                            <a class="agent-statistics-notice"
+                               href="@Url.Action("AgentInfo", "AdminAr", new { agentId = notice.AgentId })">
+                                <span class="agent-statistics-notice-icon @notice.IconCssClass"><i class="@notice.Icon"></i></span>
+                                <strong>@notice.Title</strong>
+                                <p>@notice.Message</p>
+                                <span class="agent-statistics-notice-severity @notice.Severity.ToLowerInvariant()">@severityText(notice.Severity)</span>
+                                <span class="agent-statistics-notice-dot"></span>
+                            </a>
+                        }
+                        @if (!Model.Notifications.Any())
+                        {
+                            <div class="agent-statistics-no-notifications">لا توجد تنبيهات للفصل المحدد.</div>
+                        }
+                    </div>
+                </article>
+
+                <article class="agent-statistics-panel">
+                    <div class="agent-statistics-panel-head"><h2><i class="fas fa-gears"></i> قواعد التنبيهات الحالية</h2></div>
+                    <div class="agent-statistics-rules">
+                        <div><span>1</span><p><strong>تراكم الطلبات المعلقة</strong><small>15 طالبًا معلقًا أو أكثر، أو وجود طلب أقدم من 3 أيام.</small></p></div>
+                        <div><span>2</span><p><strong>ارتفاع نسبة الرفض</strong><small>نسبة المرفوض من الطلبات المحسومة 25% أو أكثر، مع وجود 5 قرارات على الأقل.</small></p></div>
+                        <div><span>3</span><p><strong>الوثائق الناقصة</strong><small>خمسة ملفات طلاب غير مكتملة أو أكثر.</small></p></div>
+                        <div><span>4</span><p><strong>عدم نشاط الوكيل</strong><small>تحذير بعد 7 أيام، وحرج بعد 14 يومًا دون إضافة طالب جديد.</small></p></div>
+                    </div>
+                </article>
+            </aside>
+        </section>
+    </main>
+</div>
+
+<script>
+    (function () {
+        "use strict";
+
+        var markRead = document.getElementById("agentStatisticsMarkRead");
+        var unread = document.getElementById("agentStatisticsUnread");
+        var fingerprint = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.NotificationFingerprint ?? ""));
+        var storageKey = "agent-statistics-ar-read-fingerprint";
+
+        function showAllRead() {
+            document.querySelectorAll(".agent-statistics-notice-dot").forEach(function (dot) {
+                dot.style.display = "none";
+            });
+            if (unread) unread.textContent = "0";
+            if (markRead) markRead.textContent = "تمت قراءة الكل";
+        }
+
+        if (fingerprint && window.localStorage.getItem(storageKey) === fingerprint) {
+            showAllRead();
+        }
+
+        if (markRead) {
+            markRead.addEventListener("click", function () {
+                window.localStorage.setItem(storageKey, fingerprint);
+                showAllRead();
+            });
+        }
+    })();
+
+
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const picker = document.getElementById("agentSearchPicker");
+        const input = document.getElementById("agentSearchInput");
+        const optionsContainer =
+            document.getElementById("agentSearchOptions");
+        const noResults =
+            document.getElementById("agentSearchNoResults");
+
+        if (!picker || !input || !optionsContainer) {
+            return;
+        }
+
+        const options = Array.from(
+            optionsContainer.querySelectorAll(".agent-search-option")
+        );
+
+        function openAndShowAll() {
+            optionsContainer.classList.add("is-open");
+
+            options.forEach(function (option) {
+                option.style.display = "flex";
+            });
+
+            if (noResults) {
+                noResults.style.display = "none";
+            }
+        }
+
+        function filterOptions() {
+            const term = input.value
+                .trim()
+                .toLocaleLowerCase();
+
+            let visibleCount = 0;
+
+            options.forEach(function (option) {
+                const searchText =
+                    (option.dataset.searchText || "")
+                        .toLocaleLowerCase();
+
+                const isVisible = searchText.includes(term);
+
+                option.style.display = isVisible
+                    ? "flex"
+                    : "none";
+
+                if (isVisible) {
+                    visibleCount++;
+                }
+            });
+
+            optionsContainer.classList.add("is-open");
+
+            if (noResults) {
+                noResults.style.display =
+                    visibleCount === 0 ? "block" : "none";
+            }
+        }
+
+        // عند الضغط يظهر جميع الوكلاء.
+        input.addEventListener("focus", openAndShowAll);
+        input.addEventListener("click", openAndShowAll);
+
+        // عند الكتابة تتم فلترة الوكلاء.
+        input.addEventListener("input", filterOptions);
+
+        options.forEach(function (option) {
+            option.addEventListener("click", function () {
+                input.value = option.dataset.agentName || "";
+                optionsContainer.classList.remove("is-open");
+
+                const form = input.closest("form");
+
+                if (form) {
+                    form.requestSubmit();
+                }
+            });
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!picker.contains(event.target)) {
+                optionsContainer.classList.remove("is-open");
+            }
+        });
+
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                optionsContainer.classList.remove("is-open");
+            }
+        });
+    });
+</script>

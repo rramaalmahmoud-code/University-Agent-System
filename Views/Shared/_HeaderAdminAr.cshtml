@@ -1,7 +1,7 @@
 ﻿@using System.IdentityModel.Tokens.Jwt
 @using System.Security.Claims
 
-@functions {
+@* @functions {
     public string GetUserType()
     {
         var jwt = Context.Request.Cookies["jwt"];
@@ -12,7 +12,7 @@
         var typeClaim = token.Claims.FirstOrDefault(c => c.Type == "userType");
         return typeClaim?.Value;
     }
-}
+} *@
 
 @{
     string currentAction = ViewContext.RouteData.Values["action"].ToString();
@@ -22,8 +22,62 @@
         ? currentController.Replace("Ar", "En")
         : currentController.Replace("En", "Ar");
 
-    string userType = GetUserType();
+    // string userType = GetUserType();
+    bool isArabic =
+      currentController.IndexOf(
+          "Ar",
+          StringComparison.OrdinalIgnoreCase) >= 0;
 
+    string userType =
+        User.FindFirst("userType")?.Value ??
+        User.FindFirst(ClaimTypes.Role)?.Value ??
+        "User";
+
+    string loggedInUserName = isArabic
+        ? User.FindFirst("displayNameArabic")?.Value
+        : User.FindFirst("displayNameEnglish")?.Value;
+
+    if (string.IsNullOrWhiteSpace(loggedInUserName))
+    {
+        loggedInUserName =
+            User.FindFirst(ClaimTypes.Name)?.Value ??
+            User.Identity?.Name ??
+            (isArabic ? "مستخدم" : "User");
+    }
+
+    string roleDisplayName;
+
+    if (isArabic)
+    {
+        roleDisplayName = userType switch
+        {
+            "Super Admin" => "مدير النظام",
+            "Admin" => "مسؤول",
+            "Agent" => "وكيل",
+            _ => "مستخدم"
+        };
+    }
+    else
+    {
+        roleDisplayName = userType switch
+        {
+            "Super Admin" => "Super Admin",
+            "Admin" => "Admin",
+            "Agent" => "Agent",
+            _ => "User"
+        };
+    }
+
+    string profileInitial =
+        string.IsNullOrWhiteSpace(loggedInUserName)
+            ? "U"
+            : loggedInUserName
+                .Trim()
+                .Substring(0, 1)
+                .ToUpperInvariant();
+
+    string logoutController =
+        isArabic ? "Ar" : "En";
     object routeValues;
     var studentIdQuery = Context.Request.Query["studentId"].FirstOrDefault();
     var studentIdQuery2 = Context.Request.Query["id"].FirstOrDefault();
@@ -153,7 +207,7 @@
             </ul>
 
         </div>
-          @if (userType == "Admin") 
+   @*        @if (userType == "Admin") 
     {
             <a href="#" class="profilelink" id="profileToggle">
                 المسؤول
@@ -173,11 +227,64 @@
                     <path fill="currentColor" d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"></path>
                 </svg>
             </a>
-        }
+        } *@
 
-        <div id="dropdownMenu" style="display: none; position: absolute; top: 100%; left: 5%; background: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); border-radius: 5px; min-width: 120px; z-index: 9999; text-align: left;">
+@*         <div id="dropdownMenu" style="display: none; position: absolute; top: 100%; left: 5%; background: rgb(255, 255, 255); border: 1px solid rgb(204, 204, 204); border-radius: 5px; min-width: 120px; z-index: 9999; text-align: left;">
             <a href="@Url.Action("Logout", "En")" style="padding: 10px 15px; display: block; text-decoration: none; color: #333;">خروج</a>
         </div>
+ *@        
+ 
+     <div class="header-profile-container">
+
+            <button type="button"
+                    class="profilelink header-profile-button"
+                    id="profileToggle"
+                    aria-haspopup="true"
+                    aria-expanded="false">
+
+                <span class="header-profile-avatar">
+                    @profileInitial
+                </span>
+
+                <span class="header-profile-information">
+                    <strong>@loggedInUserName</strong>
+                    <small>@roleDisplayName</small>
+                </span>
+
+                <i class="fas fa-chevron-down header-profile-arrow"></i>
+            </button>
+
+            <div id="dropdownMenu"
+                 class="header-profile-dropdown">
+
+                <div class="header-profile-dropdown-user">
+
+                    <span class="header-profile-dropdown-avatar">
+                        @profileInitial
+                    </span>
+
+                    <div class="header-profile-dropdown-details">
+                        <strong>@loggedInUserName</strong>
+                        <small>@roleDisplayName</small>
+                    </div>
+
+                </div>
+
+                <div class="header-profile-dropdown-divider"></div>
+
+                <a href="@Url.Action("Logout", logoutController)"
+                   class="header-profile-logout">
+
+                    <i class="fas fa-sign-out-alt"></i>
+
+                    <span>
+                        @(isArabic ? "تسجيل الخروج" : "Logout")
+                    </span>
+                </a>
+
+            </div>
+        </div>
+
         <script>
             const toggle = document.getElementById('profileToggle');
             const menu = document.getElementById('dropdownMenu');

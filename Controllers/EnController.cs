@@ -1566,7 +1566,7 @@ WHERE studentId = @studentId;
                 HttpOnly = true,
                 Secure = false, // 👈 set true ONLY if using HTTPS
                 SameSite = SameSiteMode.Lax, // 👈 allows redirects to still carry the cookie
-                Expires = DateTimeOffset.Now.AddDays(7),
+                Expires = DateTimeOffset.Now.AddDays(2),
                 Path = "/",   // allow everywhere
                 Domain = null // 👈 don’t force "localhost", browser will scope to current host (IP or localhost)
             });
